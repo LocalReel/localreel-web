@@ -19,6 +19,20 @@ import {
   type Source,
 } from './api'
 
+function gcJobSummary(job: JobRecord): string | null {
+  if (!job.result) return null
+  try {
+    const result = JSON.parse(job.result) as {
+      removed?: number
+      freed_bytes?: number
+      kept?: number
+    }
+    return `removed ${result.removed ?? 0}, freed ${formatBytes(result.freed_bytes ?? 0)}, kept ${result.kept ?? 0}`
+  } catch {
+    return null
+  }
+}
+
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
   const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
@@ -44,6 +58,7 @@ export default function Admin() {
   const [backupFile, setBackupFile] = useState<File | null>(null)
   const [backupReport, setBackupReport] = useState<BackupImportReport | null>(null)
   const [backupBusy, setBackupBusy] = useState(false)
+  const latestGc = jobs.find(job => job.kind === 'cache_gc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
@@ -294,6 +309,12 @@ export default function Admin() {
           <p className="muted">
             Removed {gcResult.removed} variant(s), freed{' '}
             {formatBytes(gcResult.freed_bytes)}; {gcResult.kept} kept.
+          </p>
+        )}
+        {latestGc && (
+          <p className="muted">
+            Last GC job: {latestGc.status}
+            {gcJobSummary(latestGc) ? ` · ${gcJobSummary(latestGc)}` : ''}
           </p>
         )}
       </section>

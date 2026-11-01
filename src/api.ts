@@ -54,6 +54,8 @@ export interface JobRecord {
   progress: number
   attempts: number
   max_attempts: number
+  message: string | null
+  result: string | null
   error: string | null
   created_at: number
   updated_at: number
