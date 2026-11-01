@@ -14,7 +14,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-      - run: npm install
-      - run: npm run build
+      - name: package.json must not have a UTF-8 BOM
+        run: |
+          node -e "const fs=require('fs');const b=fs.readFileSync('package.json');if(b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF){console.error('package.json has a UTF-8 BOM');process.exit(1)}"
+      - run: npm ci
+      - name: Resume unit tests
+        run: npm test
+      - name: Syntax check browser test
+        run: node --check scripts/browser-resume-test.mjs
+      - name: Build
+        run: npm run build

@@ -10,6 +10,7 @@ import {
   type Media,
   type Playback,
 } from './api'
+import { resumeTarget } from './resume'
 
 export default function Reels() {
   const [items, setItems] = useState<Media[]>([])
@@ -81,8 +82,9 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
       .then(state => {
         if (cancelled) return
         const duration = state.duration || media.duration || 0
-        if (state.position > 5 && duration > 0 && state.position < duration - 5) {
-          setResumeAt(state.position)
+        const target = resumeTarget(state.position, duration)
+        if (target !== null) {
+          setResumeAt(target)
         } else {
           setResumeAt(null)
           resumePending.current = false
@@ -162,7 +164,11 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
     const element = video.current
     if (!element || resumeApplied.current || !resumeAt || element.readyState < 1) return
     const duration = Number.isFinite(element.duration) ? element.duration : 0
-    const target = duration > 0 ? Math.min(resumeAt, Math.max(0, duration - 5)) : resumeAt
+    const target = resumeTarget(resumeAt, duration)
+    if (target === null) {
+      resumePending.current = false
+      return
+    }
     element.currentTime = target
     resumeApplied.current = true
     resumePending.current = false
