@@ -6,10 +6,12 @@ import {
   fetchJobs,
   fetchScanRuns,
   fetchSources,
+  importBackup,
   runCacheGc,
   setSourceEnabled,
   triggerScan,
   type AdminHealth,
+  type BackupImportReport,
   type CacheGcReport,
   type CacheStats,
   type JobRecord,
@@ -39,6 +41,9 @@ export default function Admin() {
   const [gcRunning, setGcRunning] = useState(false)
   const [removing, setRemoving] = useState<number | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [backupFile, setBackupFile] = useState<File | null>(null)
+  const [backupReport, setBackupReport] = useState<BackupImportReport | null>(null)
+  const [backupBusy, setBackupBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
@@ -92,6 +97,25 @@ export default function Admin() {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
       setRemoving(null)
+    }
+  }
+
+  const importSelectedBackup = async () => {
+    if (!backupFile) return
+    setBackupBusy(true)
+    setError(null)
+    setBackupReport(null)
+    try {
+      const preview = await importBackup(backupFile, true)
+      const message = `Import backup?\n\nSources: ${preview.sources}\nStates: ${preview.states}\nMissing states: ${preview.missing}\n\nExisting progress is never lowered.`
+      if (!window.confirm(message)) return
+      const report = await importBackup(backupFile, false)
+      setBackupReport(report)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setBackupBusy(false)
     }
   }
 
@@ -270,6 +294,47 @@ export default function Admin() {
           <p className="muted">
             Removed {gcResult.removed} variant(s), freed{' '}
             {formatBytes(gcResult.freed_bytes)}; {gcResult.kept} kept.
+          </p>
+        )}
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>Backup</h2>
+          <a className="ghost" href="/api/v1/backup" download>
+            Export JSON
+          </a>
+        </div>
+        <p className="muted">
+          Import merges liked/favorite flags and never lowers existing progress.
+          Run a scan before importing if the source is new.
+        </p>
+        <div className="backup-import">
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={event => {
+              setBackupFile(event.target.files?.[0] ?? null)
+              setBackupReport(null)
+            }}
+          />
+          <button
+            type="button"
+            className="ghost"
+            disabled={!backupFile || backupBusy}
+            onClick={() => void importSelectedBackup()}
+          >
+            {backupBusy ? 'Importing…' : 'Import'}
+          </button>
+        </div>
+        {backupReport && (
+          <p className="muted">
+            Sources +{backupReport.sources_added} · states imported{' '}
+            {backupReport.imported} · unchanged {backupReport.unchanged} ·
+            missing {backupReport.missing}
+            {backupReport.warnings.length > 0
+              ? ` · warnings ${backupReport.warnings.length}`
+              : ''}
           </p>
         )}
       </section>

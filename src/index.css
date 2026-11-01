@@ -393,6 +393,20 @@ h1 {
   cursor: default;
 }
 
+a.ghost {
+  display: inline-block;
+  line-height: 2.1rem;
+  text-decoration: none;
+}
+
+.backup-import {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
 .table-wrap {
   margin-top: 0.75rem;
   overflow-x: auto;

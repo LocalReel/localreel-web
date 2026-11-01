@@ -74,6 +74,17 @@ export interface ScanRun {
   failed: number
 }
 
+export interface BackupImportReport {
+  dry_run: boolean
+  sources: number
+  sources_added: number
+  states: number
+  imported: number
+  unchanged: number
+  missing: number
+  warnings: string[]
+}
+
 export interface DeleteSourceReport {
   source_id: number
   source_uri: string
@@ -189,6 +200,18 @@ export function fetchJobs(limit = 20): Promise<JobRecord[]> {
 
 export function fetchScanRuns(limit = 20): Promise<ScanRun[]> {
   return request<ScanRun[]>(`/api/v1/scan-runs?limit=${limit}`)
+}
+
+export async function importBackup(
+  file: File,
+  dryRun: boolean,
+): Promise<BackupImportReport> {
+  const text = await file.text()
+  return request<BackupImportReport>(`/api/v1/backup?dry_run=${dryRun}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: text,
+  })
 }
 
 export function fetchCacheStats(): Promise<CacheStats> {
