@@ -1,0 +1,21 @@
+:root {
+  color-scheme: light;
+  --canvas: #f3f0e8;
+  --surface: #fbfaf6;
+  --ink: #1f1d18;
+  --muted: #686159;
+  --line: rgba(31, 29, 24, 0.12);
+  --accent: #9d4f32;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100dvh;
+  background: var(--canvas);
+  color: var(--ink);
+  font: 16px/1.5 "Aptos", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { min-height: 100dvh; }
