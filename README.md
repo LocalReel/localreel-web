@@ -32,6 +32,20 @@ npm run build
 
 `dist/` is consumed by the server as static assets in a later phase.
 
+## Browser resume test
+
+With a server running against a library that has a saved position > 5s:
+
+```powershell
+$env:LOCALREEL_BASE_URL = 'http://127.0.0.1:3317'
+$env:CHROME_PATH = 'C:\...\chrome.exe'
+npm run test:resume
+```
+
+The script launches headless Chromium with the DevTools Protocol, opens
+`/watch`, and asserts the first Reels `<video>.currentTime` is within 3s of the
+saved position.
+
 ## License
 
 TBD by the repository owner.
