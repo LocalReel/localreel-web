@@ -234,11 +234,10 @@ export async function importBackup(
 }
 
 export async function restoreBackup(file: File): Promise<{ job_id: string }> {
-  const text = await file.text()
-  return request<{ job_id: string }>('/api/v1/backup/restore', {
+  return request<{ job_id: string }>('/api/v1/backup/restore/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: text,
+    body: file,
   })
 }
 
