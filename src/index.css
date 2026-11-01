@@ -399,6 +399,28 @@ a.ghost {
   text-decoration: none;
 }
 
+.remap-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.remap-form .muted {
+  margin-bottom: 0.6rem;
+}
+
+.remap-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.remap-row .search {
+  flex: 1 1 20rem;
+  min-height: 2.1rem;
+}
+
 .backup-import {
   display: flex;
   flex-wrap: wrap;

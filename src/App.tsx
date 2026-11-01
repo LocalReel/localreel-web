@@ -33,6 +33,7 @@ function Library() {
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<MediaFilter>('all')
+  const [includeArchived, setIncludeArchived] = useState(false)
   const [selected, setSelected] = useState<Media | null>(null)
   const requestId = useRef(0)
 
@@ -47,6 +48,7 @@ function Library() {
           filter,
           limit: 60,
           offset,
+          includeArchived,
         })
         if (current !== requestId.current) return
         setPage(previous =>
@@ -62,7 +64,7 @@ function Library() {
         if (current === requestId.current) setLoading(false)
       }
     },
-    [filter, query],
+    [filter, includeArchived, query],
   )
 
   useEffect(() => {
@@ -117,6 +119,14 @@ function Library() {
               {entry.label}
             </button>
           ))}
+          <button
+            type="button"
+            className={includeArchived ? 'filter active' : 'filter'}
+            title="Include media from archived sources"
+            onClick={() => setIncludeArchived(value => !value)}
+          >
+            Archived
+          </button>
         </div>
       </section>
 

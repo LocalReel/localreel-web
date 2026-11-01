@@ -7,6 +7,7 @@ import {
   fetchScanRuns,
   fetchSources,
   importBackup,
+  remapSource,
   runCacheGc,
   setSourceArchived,
   setSourceEnabled,
@@ -16,6 +17,7 @@ import {
   type CacheGcReport,
   type CacheStats,
   type JobRecord,
+  type RemapReport,
   type ScanRun,
   type Source,
 } from './api'
@@ -56,6 +58,10 @@ export default function Admin() {
   const [gcRunning, setGcRunning] = useState(false)
   const [removing, setRemoving] = useState<number | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [remapFor, setRemapFor] = useState<Source | null>(null)
+  const [remapUri, setRemapUri] = useState('')
+  const [remapReport, setRemapReport] = useState<RemapReport | null>(null)
+  const [remapBusy, setRemapBusy] = useState(false)
   const [backupFile, setBackupFile] = useState<File | null>(null)
   const [backupReport, setBackupReport] = useState<BackupImportReport | null>(null)
   const [backupBusy, setBackupBusy] = useState(false)
@@ -159,6 +165,53 @@ export default function Admin() {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
       setToggling(null)
+    }
+  }
+
+  const startRemap = (source: Source) => {
+    setRemapFor(source)
+    setRemapUri('')
+    setRemapReport(null)
+    setError(null)
+  }
+
+  const previewRemap = async () => {
+    if (!remapFor || !remapUri.trim()) return
+    setRemapBusy(true)
+    setError(null)
+    try {
+      const report = await remapSource(remapFor.id, remapUri.trim(), true)
+      setRemapReport(report)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setRemapBusy(false)
+    }
+  }
+
+  const applyRemap = async () => {
+    if (!remapFor || !remapReport) return
+    if (
+      !window.confirm(
+        `Remap source?\n\n${remapReport.remapped} media will move, ${remapReport.missing} missing, ${remapReport.skipped} skipped.`,
+      )
+    ) {
+      return
+    }
+    setRemapBusy(true)
+    setError(null)
+    try {
+      const report = await remapSource(remapFor.id, remapUri.trim(), false)
+      setActionMessage(
+        `Remapped source: ${report.remapped} media, ${report.missing} missing.`,
+      )
+      setRemapFor(null)
+      setRemapReport(null)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setRemapBusy(false)
     }
   }
 
@@ -277,6 +330,13 @@ export default function Admin() {
                           <button
                             type="button"
                             className="ghost"
+                            onClick={() => startRemap(source)}
+                          >
+                            Remap
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
                             disabled={removing === source.id}
                             onClick={() => void remove(source)}
                           >
@@ -304,6 +364,13 @@ export default function Admin() {
                           <button
                             type="button"
                             className="ghost"
+                            onClick={() => startRemap(source)}
+                          >
+                            Remap
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
                             disabled={scanning === source.id || !source.enabled}
                             onClick={() => void scan(source.id)}
                           >
@@ -316,6 +383,60 @@ export default function Admin() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {remapFor && (
+          <div className="remap-form">
+            <p className="muted">
+              Remap <span className="mono">{remapFor.uri}</span> to a new local
+              directory:
+            </p>
+            <div className="remap-row">
+              <input
+                className="search"
+                value={remapUri}
+                placeholder="New local directory"
+                onChange={event => {
+                  setRemapUri(event.target.value)
+                  setRemapReport(null)
+                }}
+              />
+              <button
+                type="button"
+                className="ghost"
+                disabled={!remapUri.trim() || remapBusy}
+                onClick={() => void previewRemap()}
+              >
+                {remapBusy ? 'Checking…' : 'Preview'}
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                disabled={!remapReport || remapBusy}
+                onClick={() => void applyRemap()}
+              >
+                Apply
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => {
+                  setRemapFor(null)
+                  setRemapReport(null)
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+            {remapReport && (
+              <p className="muted">
+                remapped {remapReport.remapped} · missing {remapReport.missing} ·
+                skipped {remapReport.skipped}
+                {remapReport.warnings.length > 0
+                  ? ` · ${remapReport.warnings.join('; ')}`
+                  : ''}
+              </p>
+            )}
           </div>
         )}
       </section>

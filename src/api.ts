@@ -77,6 +77,18 @@ export interface ScanRun {
   failed: number
 }
 
+export interface RemapReport {
+  source_id: number
+  old_uri: string
+  new_uri: string
+  dry_run: boolean
+  media_total: number
+  remapped: number
+  missing: number
+  skipped: number
+  warnings: string[]
+}
+
 export interface BackupImportReport {
   dry_run: boolean
   sources: number
@@ -151,6 +163,7 @@ export function fetchMedia(params: {
   limit?: number
   offset?: number
   source_id?: number
+  includeArchived?: boolean
 }): Promise<MediaPage> {
   const search = new URLSearchParams()
   if (params.q) search.set('q', params.q)
@@ -158,6 +171,7 @@ export function fetchMedia(params: {
   if (params.limit) search.set('limit', String(params.limit))
   if (params.offset) search.set('offset', String(params.offset))
   if (params.source_id) search.set('source_id', String(params.source_id))
+  if (params.includeArchived) search.set('include_archived', 'true')
   const suffix = search.toString()
   return request<MediaPage>(`/api/v1/media${suffix ? `?${suffix}` : ''}`)
 }
@@ -250,6 +264,18 @@ export function setSourceEnabled(sourceId: number, enabled: boolean): Promise<So
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ enabled }),
+  })
+}
+
+export function remapSource(
+  sourceId: number,
+  uri: string,
+  dryRun: boolean,
+): Promise<RemapReport> {
+  return request<RemapReport>(`/api/v1/sources/${sourceId}/remap`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uri, dry_run: dryRun }),
   })
 }
 
