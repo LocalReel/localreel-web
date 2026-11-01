@@ -4,8 +4,10 @@ import Reels from './Reels'
 import {
   displayTitle,
   fetchMedia,
+  fetchState,
   formatDuration,
   preparePlayback,
+  saveState,
   thumbnailUrl,
   type Media,
   type MediaFilter,
@@ -177,7 +179,12 @@ function Library() {
 function Player({ media, onClose }: { media: Media; onClose: () => void }) {
   const [playback, setPlayback] = useState<Playback | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [resumeAt, setResumeAt] = useState<number | null>(null)
   const cancelled = useRef(false)
+  const video = useRef<HTMLVideoElement | null>(null)
+  const lastSave = useRef(0)
+  const resumeApplied = useRef(false)
+  const resumePending = useRef(true)
 
   useEffect(() => {
     cancelled.current = false
@@ -205,6 +212,68 @@ function Player({ media, onClose }: { media: Media; onClose: () => void }) {
     }
   }, [media.id])
 
+  useEffect(() => {
+    let stopped = false
+    resumeApplied.current = false
+    resumePending.current = true
+    fetchState(media.id)
+      .then(state => {
+        if (stopped) return
+        const duration = state.duration || media.duration || 0
+        if (state.position > 5 && duration > 0 && state.position < duration - 5) {
+          setResumeAt(state.position)
+        } else {
+          setResumeAt(null)
+          resumePending.current = false
+        }
+      })
+      .catch(() => {
+        if (!stopped) {
+          setResumeAt(null)
+          resumePending.current = false
+        }
+      })
+    return () => {
+      stopped = true
+    }
+  }, [media.duration, media.id])
+
+  const saveProgress = useCallback(
+    (position: number, duration: number) => {
+      if (resumePending.current) return
+      if (!Number.isFinite(position) || position <= 0) return
+      void saveState(media.id, {
+        position,
+        duration:
+          Number.isFinite(duration) && duration > 0 ? duration : (media.duration ?? 0),
+      }).catch(() => {
+        // best effort
+      })
+    },
+    [media.duration, media.id],
+  )
+
+  const applyResume = useCallback(() => {
+    const element = video.current
+    if (!element || resumeApplied.current || !resumeAt || element.readyState < 1) return
+    const duration = Number.isFinite(element.duration) ? element.duration : 0
+    element.currentTime =
+      duration > 0 ? Math.min(resumeAt, Math.max(0, duration - 5)) : resumeAt
+    resumeApplied.current = true
+    resumePending.current = false
+  }, [resumeAt])
+
+  useEffect(() => {
+    applyResume()
+  }, [applyResume, playback?.url])
+
+  useEffect(() => {
+    return () => {
+      const element = video.current
+      if (element) saveProgress(element.currentTime, element.duration)
+    }
+  }, [saveProgress])
+
   const direct = playback?.mode === 'direct' || playback?.mode === 'ready'
   const source = direct ? playback?.url : undefined
   const poster = useMemo(() => thumbnailUrl(media) ?? undefined, [media])
@@ -218,11 +287,21 @@ function Player({ media, onClose }: { media: Media; onClose: () => void }) {
         {source ? (
           <video
             key={source}
+            ref={video}
             src={source}
             poster={poster}
             controls
             autoPlay
             playsInline
+            onLoadedMetadata={applyResume}
+            onPause={event =>
+              saveProgress(event.currentTarget.currentTime, event.currentTarget.duration)
+            }
+            onTimeUpdate={event => {
+              if (Date.now() - lastSave.current < 5000) return
+              lastSave.current = Date.now()
+              saveProgress(event.currentTarget.currentTime, event.currentTarget.duration)
+            }}
             onError={() => setError('Unable to play this file.')}
           />
         ) : (

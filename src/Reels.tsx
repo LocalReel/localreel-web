@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   displayTitle,
   fetchMedia,
+  fetchState,
   formatDuration,
   preparePlayback,
   saveState,
@@ -65,11 +66,42 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
   const [playback, setPlayback] = useState<Playback | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [muted, setMuted] = useState(true)
+  const [resumeAt, setResumeAt] = useState<number | null>(null)
   const video = useRef<HTMLVideoElement | null>(null)
   const lastSave = useRef(0)
+  const resumeApplied = useRef(false)
+  const resumePending = useRef(true)
+
+  useEffect(() => {
+    if (!active) return
+    let cancelled = false
+    resumeApplied.current = false
+    resumePending.current = true
+    fetchState(media.id)
+      .then(state => {
+        if (cancelled) return
+        const duration = state.duration || media.duration || 0
+        if (state.position > 5 && duration > 0 && state.position < duration - 5) {
+          setResumeAt(state.position)
+        } else {
+          setResumeAt(null)
+          resumePending.current = false
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResumeAt(null)
+          resumePending.current = false
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [active, media.duration, media.id])
 
   const save = useCallback(
     (position: number, duration: number) => {
+      if (resumePending.current) return
       if (!Number.isFinite(position) || position <= 0) return
       void saveState(media.id, {
         position,
@@ -126,6 +158,21 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
     }
   }, [active, muted, playback?.url])
 
+  const applyResume = useCallback(() => {
+    const element = video.current
+    if (!element || resumeApplied.current || !resumeAt || element.readyState < 1) return
+    const duration = Number.isFinite(element.duration) ? element.duration : 0
+    const target = duration > 0 ? Math.min(resumeAt, Math.max(0, duration - 5)) : resumeAt
+    element.currentTime = target
+    resumeApplied.current = true
+    resumePending.current = false
+  }, [resumeAt])
+
+  useEffect(() => {
+    if (!active) return
+    applyResume()
+  }, [active, applyResume, playback?.url])
+
   const url =
     playback?.mode === 'direct' || playback?.mode === 'ready'
       ? playback.url
@@ -154,6 +201,7 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
             muted={muted}
             preload="metadata"
             onClick={togglePlay}
+            onLoadedMetadata={applyResume}
             onPause={event =>
               save(event.currentTarget.currentTime, event.currentTarget.duration)
             }

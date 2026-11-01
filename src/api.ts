@@ -135,6 +135,10 @@ export function streamUrl(id: number): string {
   return `/api/v1/media/${id}/stream`
 }
 
+export function fetchState(id: number): Promise<MediaState> {
+  return request<MediaState>(`/api/v1/media/${id}/state`)
+}
+
 export function saveState(
   id: number,
   patch: { position?: number; duration?: number; liked?: boolean; favorite?: boolean },
