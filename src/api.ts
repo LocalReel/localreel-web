@@ -29,6 +29,15 @@ export interface Playback {
 
 export type MediaFilter = 'all' | 'favorites' | 'continue'
 
+export interface MediaState {
+  media_id: number
+  liked: boolean
+  favorite: boolean
+  position: number
+  duration: number
+  updated_at: number
+}
+
 export interface Source {
   id: number
   uri: string
@@ -124,6 +133,17 @@ export function thumbnailUrl(media: Media): string | null {
 
 export function streamUrl(id: number): string {
   return `/api/v1/media/${id}/stream`
+}
+
+export function saveState(
+  id: number,
+  patch: { position?: number; duration?: number; liked?: boolean; favorite?: boolean },
+): Promise<MediaState> {
+  return request<MediaState>(`/api/v1/media/${id}/state`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
 }
 
 export function fetchAdminHealth(): Promise<AdminHealth> {

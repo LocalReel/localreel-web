@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Admin from './Admin'
+import Reels from './Reels'
 import {
   displayTitle,
   fetchMedia,
@@ -19,7 +20,9 @@ const filters: Array<{ id: MediaFilter; label: string }> = [
 ]
 
 export default function App() {
-  return window.location.pathname.startsWith('/admin') ? <Admin /> : <Library />
+  if (window.location.pathname.startsWith('/watch')) return <Reels />
+  if (window.location.pathname.startsWith('/admin')) return <Admin />
+  return <Library />
 }
 
 function Library() {
@@ -82,6 +85,9 @@ function Library() {
           <p className="count">
             {total} {total === 1 ? 'item' : 'items'}
           </p>
+          <a className="nav-link" href="/watch">
+            Reels
+          </a>
           <a className="nav-link" href="/admin">
             Admin →
           </a>
