@@ -166,6 +166,14 @@ export function fetchScanRuns(limit = 20): Promise<ScanRun[]> {
   return request<ScanRun[]>(`/api/v1/scan-runs?limit=${limit}`)
 }
 
+export function setSourceEnabled(sourceId: number, enabled: boolean): Promise<Source> {
+  return request<Source>(`/api/v1/sources/${sourceId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  })
+}
+
 export function triggerScan(sourceId: number): Promise<{ job_id: string }> {
   return request<{ job_id: string }>(`/api/v1/sources/${sourceId}/scan`, {
     method: 'POST',

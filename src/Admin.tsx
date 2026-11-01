@@ -4,6 +4,7 @@ import {
   fetchJobs,
   fetchScanRuns,
   fetchSources,
+  setSourceEnabled,
   triggerScan,
   type AdminHealth,
   type JobRecord,
@@ -19,6 +20,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
+  const [toggling, setToggling] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -45,6 +47,19 @@ export default function Admin() {
     const timer = window.setInterval(() => void load(), 4000)
     return () => window.clearInterval(timer)
   }, [load])
+
+  const toggle = async (source: Source) => {
+    setToggling(source.id)
+    setError(null)
+    try {
+      await setSourceEnabled(source.id, !source.enabled)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setToggling(null)
+    }
+  }
 
   const scan = async (sourceId: number) => {
     setScanning(sourceId)
@@ -131,7 +146,15 @@ export default function Admin() {
                       <button
                         type="button"
                         className="ghost"
-                        disabled={scanning === source.id}
+                        disabled={toggling === source.id}
+                        onClick={() => void toggle(source)}
+                      >
+                        {source.enabled ? 'Disable' : 'Enable'}
+                      </button>{' '}
+                      <button
+                        type="button"
+                        className="ghost"
+                        disabled={scanning === source.id || !source.enabled}
                         onClick={() => void scan(source.id)}
                       >
                         {scanning === source.id ? 'Queueing…' : 'Scan'}
