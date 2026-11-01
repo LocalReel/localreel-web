@@ -233,6 +233,15 @@ export async function importBackup(
   })
 }
 
+export async function restoreBackup(file: File): Promise<{ job_id: string }> {
+  const text = await file.text()
+  return request<{ job_id: string }>('/api/v1/backup/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: text,
+  })
+}
+
 export function fetchCacheStats(): Promise<CacheStats> {
   return request<CacheStats>('/api/v1/admin/cache')
 }

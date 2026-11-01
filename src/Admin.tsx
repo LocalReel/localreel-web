@@ -8,6 +8,7 @@ import {
   fetchSources,
   importBackup,
   remapSource,
+  restoreBackup,
   runCacheGc,
   setSourceArchived,
   setSourceEnabled,
@@ -133,6 +134,29 @@ export default function Admin() {
       if (!window.confirm(message)) return
       const report = await importBackup(backupFile, false)
       setBackupReport(report)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setBackupBusy(false)
+    }
+  }
+
+  const restoreSelectedBackup = async () => {
+    if (!backupFile) return
+    if (
+      !window.confirm(
+        'Restore this backup?\n\nThis imports sources, scans/probes/thumbnails them, and replays states. It does not overwrite existing progress.',
+      )
+    ) {
+      return
+    }
+    setBackupBusy(true)
+    setError(null)
+    try {
+      const queued = await restoreBackup(backupFile)
+      setActionMessage(`Restore job queued: ${queued.job_id}`)
+      setBackupReport(null)
       await load()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -492,7 +516,8 @@ export default function Admin() {
         </div>
         <p className="muted">
           Import merges liked/favorite flags and never lowers existing progress.
-          Run a scan before importing if the source is new.
+          Restore is the one-step path for a fresh data dir: import, scan/probe/
+          thumbnail, replay states.
         </p>
         <div className="backup-import">
           <input
@@ -509,7 +534,16 @@ export default function Admin() {
             disabled={!backupFile || backupBusy}
             onClick={() => void importSelectedBackup()}
           >
-            {backupBusy ? 'Importing…' : 'Import'}
+            {backupBusy ? 'Working…' : 'Import'}
+          </button>
+          <button
+            type="button"
+            className="ghost"
+            disabled={!backupFile || backupBusy}
+            onClick={() => void restoreSelectedBackup()}
+            title="Import, scan/probe/thumbnail, then replay states"
+          >
+            Restore
           </button>
         </div>
         {backupReport && (
