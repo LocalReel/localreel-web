@@ -74,6 +74,16 @@ export interface ScanRun {
   failed: number
 }
 
+export interface DeleteSourceReport {
+  source_id: number
+  source_uri: string
+  dry_run: boolean
+  media_count: number
+  state_count: number
+  variant_count: number
+  deleted_files: number
+}
+
 export interface CacheStats {
   transcode_count: number
   transcode_bytes: number
@@ -191,6 +201,20 @@ export function runCacheGc(): Promise<CacheGcReport> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({}),
   })
+}
+
+export function deleteSource(
+  sourceId: number,
+  options: { deleteMedia?: boolean; dryRun?: boolean } = {},
+): Promise<DeleteSourceReport> {
+  const params = new URLSearchParams()
+  if (options.deleteMedia) params.set('delete_media', 'true')
+  if (options.dryRun) params.set('dry_run', 'true')
+  const suffix = params.toString()
+  return request<DeleteSourceReport>(
+    `/api/v1/sources/${sourceId}${suffix ? `?${suffix}` : ''}`,
+    { method: 'DELETE' },
+  )
 }
 
 export function setSourceEnabled(sourceId: number, enabled: boolean): Promise<Source> {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  deleteSource,
   fetchAdminHealth,
   fetchCacheStats,
   fetchJobs,
@@ -36,6 +37,8 @@ export default function Admin() {
   const [cache, setCache] = useState<CacheStats | null>(null)
   const [gcResult, setGcResult] = useState<CacheGcReport | null>(null)
   const [gcRunning, setGcRunning] = useState(false)
+  const [removing, setRemoving] = useState<number | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
@@ -69,6 +72,28 @@ export default function Admin() {
     const timer = window.setInterval(() => void load(), 4000)
     return () => window.clearInterval(timer)
   }, [load])
+
+  const remove = async (source: Source) => {
+    setError(null)
+    setActionMessage(null)
+    try {
+      const preview = await deleteSource(source.id, { dryRun: true })
+      const detail = `${preview.media_count} media items, ${preview.state_count} states, ${preview.variant_count} artifacts`
+      if (!window.confirm(`Remove source ${source.uri}?\n\n${detail}\n\nThis deletes the source, media metadata, state and generated artifacts.`)) {
+        return
+      }
+      setRemoving(source.id)
+      const report = await deleteSource(source.id, { deleteMedia: true })
+      setActionMessage(
+        `Removed source: ${report.media_count} media, ${report.state_count} states, ${report.deleted_files} files.`,
+      )
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setRemoving(null)
+    }
+  }
 
   const collectGarbage = async () => {
     setGcRunning(true)
@@ -123,6 +148,7 @@ export default function Admin() {
       </header>
 
       {error && <div className="notice error">{error}</div>}
+      {actionMessage && <div className="notice">{actionMessage}</div>}
       {loading && !health && <div className="notice">Loading diagnostics…</div>}
 
       {health && (
@@ -186,6 +212,14 @@ export default function Admin() {
                         onClick={() => void toggle(source)}
                       >
                         {source.enabled ? 'Disable' : 'Enable'}
+                      </button>{' '}
+                      <button
+                        type="button"
+                        className="ghost"
+                        disabled={removing === source.id}
+                        onClick={() => void remove(source)}
+                      >
+                        {removing === source.id ? 'Removing…' : 'Remove'}
                       </button>{' '}
                       <button
                         type="button"
