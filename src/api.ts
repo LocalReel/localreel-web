@@ -74,6 +74,21 @@ export interface ScanRun {
   failed: number
 }
 
+export interface CacheStats {
+  transcode_count: number
+  transcode_bytes: number
+  thumbnail_count: number
+  thumbnail_bytes: number
+  total_bytes: number
+}
+
+export interface CacheGcReport {
+  removed: number
+  freed_bytes: number
+  kept: number
+  remaining_bytes: number
+}
+
 export interface AdminHealth {
   status: string
   version: string
@@ -164,6 +179,18 @@ export function fetchJobs(limit = 20): Promise<JobRecord[]> {
 
 export function fetchScanRuns(limit = 20): Promise<ScanRun[]> {
   return request<ScanRun[]>(`/api/v1/scan-runs?limit=${limit}`)
+}
+
+export function fetchCacheStats(): Promise<CacheStats> {
+  return request<CacheStats>('/api/v1/admin/cache')
+}
+
+export function runCacheGc(): Promise<CacheGcReport> {
+  return request<CacheGcReport>('/api/v1/admin/cache/gc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  })
 }
 
 export function setSourceEnabled(sourceId: number, enabled: boolean): Promise<Source> {

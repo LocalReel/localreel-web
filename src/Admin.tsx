@@ -1,22 +1,41 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   fetchAdminHealth,
+  fetchCacheStats,
   fetchJobs,
   fetchScanRuns,
   fetchSources,
+  runCacheGc,
   setSourceEnabled,
   triggerScan,
   type AdminHealth,
+  type CacheGcReport,
+  type CacheStats,
   type JobRecord,
   type ScanRun,
   type Source,
 } from './api'
+
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`
+}
 
 export default function Admin() {
   const [health, setHealth] = useState<AdminHealth | null>(null)
   const [sources, setSources] = useState<Source[]>([])
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [runs, setRuns] = useState<ScanRun[]>([])
+  const [cache, setCache] = useState<CacheStats | null>(null)
+  const [gcResult, setGcResult] = useState<CacheGcReport | null>(null)
+  const [gcRunning, setGcRunning] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
@@ -25,16 +44,19 @@ export default function Admin() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [nextHealth, nextSources, nextJobs, nextRuns] = await Promise.all([
-        fetchAdminHealth(),
-        fetchSources(),
-        fetchJobs(20),
-        fetchScanRuns(20),
-      ])
+      const [nextHealth, nextSources, nextJobs, nextRuns, nextCache] =
+        await Promise.all([
+          fetchAdminHealth(),
+          fetchSources(),
+          fetchJobs(20),
+          fetchScanRuns(20),
+          fetchCacheStats(),
+        ])
       setHealth(nextHealth)
       setSources(nextSources)
       setJobs(nextJobs)
       setRuns(nextRuns)
+      setCache(nextCache)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
     } finally {
@@ -47,6 +69,20 @@ export default function Admin() {
     const timer = window.setInterval(() => void load(), 4000)
     return () => window.clearInterval(timer)
   }, [load])
+
+  const collectGarbage = async () => {
+    setGcRunning(true)
+    setError(null)
+    try {
+      const report = await runCacheGc()
+      setGcResult(report)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setGcRunning(false)
+    }
+  }
 
   const toggle = async (source: Source) => {
     setToggling(source.id)
@@ -165,6 +201,42 @@ export default function Admin() {
               </tbody>
             </table>
           </div>
+        )}
+      </section>
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>Cache</h2>
+          <button
+            type="button"
+            className="ghost"
+            disabled={gcRunning}
+            onClick={() => void collectGarbage()}
+          >
+            {gcRunning ? 'Running…' : 'Run GC'}
+          </button>
+        </div>
+        {cache ? (
+          <dl className="paths">
+            <dt>Total</dt>
+            <dd>{formatBytes(cache.total_bytes)}</dd>
+            <dt>Transcodes</dt>
+            <dd>
+              {cache.transcode_count} · {formatBytes(cache.transcode_bytes)}
+            </dd>
+            <dt>Thumbnails</dt>
+            <dd>
+              {cache.thumbnail_count} · {formatBytes(cache.thumbnail_bytes)}
+            </dd>
+          </dl>
+        ) : (
+          <p className="muted">Cache stats unavailable.</p>
+        )}
+        {gcResult && (
+          <p className="muted">
+            Removed {gcResult.removed} variant(s), freed{' '}
+            {formatBytes(gcResult.freed_bytes)}; {gcResult.kept} kept.
+          </p>
         )}
       </section>
 
