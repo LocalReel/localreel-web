@@ -22,7 +22,12 @@ jobs:
       - run: npm ci
       - name: Resume unit tests
         run: npm test
-      - name: Syntax check browser test
-        run: node --check scripts/browser-resume-test.mjs
+      - name: Syntax check browser tests
+        run: |
+          node --check scripts/browser-resume-test.mjs
+          node --check scripts/browser-resume-mock.mjs
+          node --check scripts/mock-server.mjs
       - name: Build
         run: npm run build
+      - name: Browser resume smoke
+        run: npm run test:browser
