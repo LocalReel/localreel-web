@@ -45,6 +45,7 @@ export interface Source {
   enabled: boolean
   created_at: number
   updated_at: number
+  archived_at: number | null
 }
 
 export interface JobRecord {
@@ -91,6 +92,7 @@ export interface DeleteSourceReport {
   source_id: number
   source_uri: string
   dry_run: boolean
+  archived: boolean
   media_count: number
   state_count: number
   variant_count: number
@@ -192,8 +194,9 @@ export function fetchAdminHealth(): Promise<AdminHealth> {
   return request<AdminHealth>('/api/v1/admin/health')
 }
 
-export function fetchSources(): Promise<Source[]> {
-  return request<Source[]>('/api/v1/sources')
+export function fetchSources(includeArchived = false): Promise<Source[]> {
+  const suffix = includeArchived ? '?include_archived=true' : ''
+  return request<Source[]>(`/api/v1/sources${suffix}`)
 }
 
 export function fetchJobs(limit = 20): Promise<JobRecord[]> {
@@ -247,6 +250,14 @@ export function setSourceEnabled(sourceId: number, enabled: boolean): Promise<So
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ enabled }),
+  })
+}
+
+export function setSourceArchived(sourceId: number, archived: boolean): Promise<Source> {
+  return request<Source>(`/api/v1/sources/${sourceId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ archived }),
   })
 }
 

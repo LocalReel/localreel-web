@@ -8,6 +8,7 @@ import {
   fetchSources,
   importBackup,
   runCacheGc,
+  setSourceArchived,
   setSourceEnabled,
   triggerScan,
   type AdminHealth,
@@ -70,7 +71,7 @@ export default function Admin() {
       const [nextHealth, nextSources, nextJobs, nextRuns, nextCache] =
         await Promise.all([
           fetchAdminHealth(),
-          fetchSources(),
+          fetchSources(true),
           fetchJobs(20),
           fetchScanRuns(20),
           fetchCacheStats(),
@@ -161,6 +162,19 @@ export default function Admin() {
     }
   }
 
+  const archive = async (source: Source) => {
+    setToggling(source.id)
+    setError(null)
+    try {
+      await setSourceArchived(source.id, !source.archived_at)
+      await load()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setToggling(null)
+    }
+  }
+
   const scan = async (sourceId: number) => {
     setScanning(sourceId)
     setError(null)
@@ -242,32 +256,61 @@ export default function Admin() {
                   <tr key={source.id}>
                     <td className="mono">{source.uri}</td>
                     <td>{source.kind}</td>
-                    <td>{source.enabled ? 'yes' : 'no'}</td>
+                    <td>
+                      {source.archived_at
+                        ? 'archived'
+                        : source.enabled
+                          ? 'yes'
+                          : 'no'}
+                    </td>
                     <td className="right">
-                      <button
-                        type="button"
-                        className="ghost"
-                        disabled={toggling === source.id}
-                        onClick={() => void toggle(source)}
-                      >
-                        {source.enabled ? 'Disable' : 'Enable'}
-                      </button>{' '}
-                      <button
-                        type="button"
-                        className="ghost"
-                        disabled={removing === source.id}
-                        onClick={() => void remove(source)}
-                      >
-                        {removing === source.id ? 'Removing…' : 'Remove'}
-                      </button>{' '}
-                      <button
-                        type="button"
-                        className="ghost"
-                        disabled={scanning === source.id || !source.enabled}
-                        onClick={() => void scan(source.id)}
-                      >
-                        {scanning === source.id ? 'Queueing…' : 'Scan'}
-                      </button>
+                      {source.archived_at ? (
+                        <>
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={toggling === source.id}
+                            onClick={() => void archive(source)}
+                          >
+                            Restore
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={removing === source.id}
+                            onClick={() => void remove(source)}
+                          >
+                            {removing === source.id ? 'Deleting…' : 'Delete'}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={toggling === source.id}
+                            onClick={() => void toggle(source)}
+                          >
+                            {source.enabled ? 'Disable' : 'Enable'}
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={toggling === source.id}
+                            onClick={() => void archive(source)}
+                          >
+                            Archive
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={scanning === source.id || !source.enabled}
+                            onClick={() => void scan(source.id)}
+                          >
+                            {scanning === source.id ? 'Queueing…' : 'Scan'}
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
