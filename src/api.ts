@@ -29,6 +29,54 @@ export interface Playback {
 
 export type MediaFilter = 'all' | 'favorites' | 'continue'
 
+export interface Source {
+  id: number
+  uri: string
+  kind: string
+  enabled: boolean
+  created_at: number
+  updated_at: number
+}
+
+export interface JobRecord {
+  id: string
+  kind: string
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'canceled'
+  progress: number
+  attempts: number
+  max_attempts: number
+  error: string | null
+  created_at: number
+  updated_at: number
+}
+
+export interface ScanRun {
+  id: number
+  source_id: number
+  source_uri: string
+  started_at: number
+  finished_at: number | null
+  status: string
+  discovered: number
+  added: number
+  updated: number
+  unchanged: number
+  removed: number
+  failed: number
+}
+
+export interface AdminHealth {
+  status: string
+  version: string
+  database: boolean
+  ffmpeg: boolean
+  media_count: number
+  data_dir: string
+  thumbnail_dir: string
+  transcode_dir: string
+  jobs: JobRecord[]
+}
+
 interface ApiErrorBody {
   error?: { code?: string; message?: string }
 }
@@ -76,6 +124,28 @@ export function thumbnailUrl(media: Media): string | null {
 
 export function streamUrl(id: number): string {
   return `/api/v1/media/${id}/stream`
+}
+
+export function fetchAdminHealth(): Promise<AdminHealth> {
+  return request<AdminHealth>('/api/v1/admin/health')
+}
+
+export function fetchSources(): Promise<Source[]> {
+  return request<Source[]>('/api/v1/sources')
+}
+
+export function fetchJobs(limit = 20): Promise<JobRecord[]> {
+  return request<JobRecord[]>(`/api/v1/jobs?limit=${limit}`)
+}
+
+export function fetchScanRuns(limit = 20): Promise<ScanRun[]> {
+  return request<ScanRun[]>(`/api/v1/scan-runs?limit=${limit}`)
+}
+
+export function triggerScan(sourceId: number): Promise<{ job_id: string }> {
+  return request<{ job_id: string }>(`/api/v1/sources/${sourceId}/scan`, {
+    method: 'POST',
+  })
 }
 
 export function displayTitle(media: Media): string {

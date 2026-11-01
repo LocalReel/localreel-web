@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Admin from './Admin'
 import {
   displayTitle,
   fetchMedia,
@@ -18,6 +19,10 @@ const filters: Array<{ id: MediaFilter; label: string }> = [
 ]
 
 export default function App() {
+  return window.location.pathname.startsWith('/admin') ? <Admin /> : <Library />
+}
+
+function Library() {
   const [page, setPage] = useState<MediaPage | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,9 +78,14 @@ export default function App() {
           <p className="kicker">Local-first media</p>
           <h1>LocalReel</h1>
         </div>
-        <p className="count">
-          {total} {total === 1 ? 'item' : 'items'}
-        </p>
+        <div className="topbar-right">
+          <p className="count">
+            {total} {total === 1 ? 'item' : 'items'}
+          </p>
+          <a className="nav-link" href="/admin">
+            Admin →
+          </a>
+        </div>
       </header>
 
       <section className="controls" aria-label="Library controls">
