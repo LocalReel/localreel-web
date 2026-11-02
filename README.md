@@ -1,18 +1,22 @@
 # localreel-web
 
-The LocalReel web UI (React 18 + TypeScript + Vite).
+The LocalReel web UI (React 18 + TypeScript + Vite): Library, Reels, Player and
+Admin against the `localreel-core` API at `/api/v1`.
 
-This repository is intentionally a thin shell for now: it talks to the
-`localreel-core` API at `/api/v1` and will be ported feature-by-feature from
-the previous LocalReel UI (library, feed, player, admin).
+The UI is bilingual (Simplified Chinese / English). Every page has a 中文 / EN
+switch; the first visit follows `navigator.language` and the choice is stored in
+`localStorage` under `localreel.lang`. Strings live in `src/i18n.ts` as two flat
+dictionaries whose key sets are enforced at compile time (`TranslationKey`) and
+by `src/i18n.test.ts`.
 
 ## Develop
 
-Start the server first:
+Start the development server first (it is isolated from an installed release:
+port 3101, data in `.dev-data/`):
 
 ```powershell
 cd ..\localreel-core
-cargo run -p localreel-server -- serve
+.\scripts\dev.ps1
 ```
 
 Then:
