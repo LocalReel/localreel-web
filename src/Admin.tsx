@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import LangSwitch from './LangSwitch'
 import {
   deleteSource,
   fetchAdminHealth,
@@ -22,8 +23,23 @@ import {
   type ScanRun,
   type Source,
 } from './api'
+import { useLang, type Translate, type TranslationKey } from './i18n'
 
-function gcJobSummary(job: JobRecord): string | null {
+const jobStatusKeys: Record<string, TranslationKey> = {
+  queued: 'admin.jobStatus.queued',
+  running: 'admin.jobStatus.running',
+  succeeded: 'admin.jobStatus.succeeded',
+  failed: 'admin.jobStatus.failed',
+  canceled: 'admin.jobStatus.canceled',
+}
+
+/** Localise the known API job/scan statuses; unknown values stay untouched. */
+function statusLabel(status: string, t: Translate): string {
+  const key = jobStatusKeys[status]
+  return key ? t(key) : status
+}
+
+function gcJobSummary(job: JobRecord, t: Translate): string | null {
   if (!job.result) return null
   try {
     const result = JSON.parse(job.result) as {
@@ -31,7 +47,11 @@ function gcJobSummary(job: JobRecord): string | null {
       freed_bytes?: number
       kept?: number
     }
-    return `removed ${result.removed ?? 0}, freed ${formatBytes(result.freed_bytes ?? 0)}, kept ${result.kept ?? 0}`
+    return t('admin.cache.gcSummary', {
+      removed: result.removed ?? 0,
+      freed: formatBytes(result.freed_bytes ?? 0),
+      kept: result.kept ?? 0,
+    })
   } catch {
     return null
   }
@@ -50,6 +70,7 @@ function formatBytes(bytes: number): string {
 }
 
 export default function Admin() {
+  const { lang, setLang, t } = useLang()
   const [health, setHealth] = useState<AdminHealth | null>(null)
   const [sources, setSources] = useState<Source[]>([])
   const [jobs, setJobs] = useState<JobRecord[]>([])
@@ -106,14 +127,22 @@ export default function Admin() {
     setActionMessage(null)
     try {
       const preview = await deleteSource(source.id, { dryRun: true })
-      const detail = `${preview.media_count} media items, ${preview.state_count} states, ${preview.variant_count} artifacts`
-      if (!window.confirm(`Remove source ${source.uri}?\n\n${detail}\n\nThis deletes the source, media metadata, state and generated artifacts.`)) {
+      const detail = t('admin.remove.detail', {
+        media: preview.media_count,
+        states: preview.state_count,
+        variants: preview.variant_count,
+      })
+      if (!window.confirm(t('admin.remove.confirm', { uri: source.uri, detail }))) {
         return
       }
       setRemoving(source.id)
       const report = await deleteSource(source.id, { deleteMedia: true })
       setActionMessage(
-        `Removed source: ${report.media_count} media, ${report.state_count} states, ${report.deleted_files} files.`,
+        t('admin.remove.done', {
+          media: report.media_count,
+          states: report.state_count,
+          files: report.deleted_files,
+        }),
       )
       await load()
     } catch (cause) {
@@ -130,7 +159,11 @@ export default function Admin() {
     setBackupReport(null)
     try {
       const preview = await importBackup(backupFile, true)
-      const message = `Import backup?\n\nSources: ${preview.sources}\nStates: ${preview.states}\nMissing states: ${preview.missing}\n\nExisting progress is never lowered.`
+      const message = t('admin.backup.import.confirm', {
+        sources: preview.sources,
+        states: preview.states,
+        missing: preview.missing,
+      })
       if (!window.confirm(message)) return
       const report = await importBackup(backupFile, false)
       setBackupReport(report)
@@ -144,18 +177,14 @@ export default function Admin() {
 
   const restoreSelectedBackup = async () => {
     if (!backupFile) return
-    if (
-      !window.confirm(
-        'Restore this backup?\n\nThis imports sources, scans/probes/thumbnails them, and replays states. It does not overwrite existing progress.',
-      )
-    ) {
+    if (!window.confirm(t('admin.backup.restore.confirm'))) {
       return
     }
     setBackupBusy(true)
     setError(null)
     try {
       const queued = await restoreBackup(backupFile)
-      setActionMessage(`Restore job queued: ${queued.job_id}`)
+      setActionMessage(t('admin.backup.restore.queued', { jobId: queued.job_id }))
       setBackupReport(null)
       await load()
     } catch (cause) {
@@ -217,7 +246,11 @@ export default function Admin() {
     if (!remapFor || !remapReport) return
     if (
       !window.confirm(
-        `Remap source?\n\n${remapReport.remapped} media will move, ${remapReport.missing} missing, ${remapReport.skipped} skipped.`,
+        t('admin.remap.confirm', {
+          remapped: remapReport.remapped,
+          missing: remapReport.missing,
+          skipped: remapReport.skipped,
+        }),
       )
     ) {
       return
@@ -227,7 +260,10 @@ export default function Admin() {
     try {
       const report = await remapSource(remapFor.id, remapUri.trim(), false)
       setActionMessage(
-        `Remapped source: ${report.remapped} media, ${report.missing} missing.`,
+        t('admin.remap.done', {
+          remapped: report.remapped,
+          missing: report.missing,
+        }),
       )
       setRemapFor(null)
       setRemapReport(null)
@@ -269,40 +305,45 @@ export default function Admin() {
     <main className="shell admin">
       <header className="topbar">
         <div>
-          <p className="kicker">Operations</p>
-          <h1>Admin</h1>
+          <p className="kicker">{t('admin.kicker')}</p>
+          <h1>{t('admin.title')}</h1>
         </div>
-        <a className="nav-link" href="/">
-          ← Library
-        </a>
+        <div className="topbar-right">
+          <LangSwitch lang={lang} onChange={setLang} t={t} />
+          <a className="nav-link" href="/">
+            {t('nav.library.back')}
+          </a>
+        </div>
       </header>
 
       {error && <div className="notice error">{error}</div>}
       {actionMessage && <div className="notice">{actionMessage}</div>}
-      {loading && !health && <div className="notice">Loading diagnostics…</div>}
+      {loading && !health && <div className="notice">{t('admin.loading')}</div>}
 
       {health && (
-        <section className="stats" aria-label="Diagnostics">
+        <section className="stats" aria-label={t('admin.diagnostics')}>
           <article className="stat">
-            <span className="stat-label">Status</span>
+            <span className="stat-label">{t('admin.status')}</span>
             <strong className={health.status === 'ok' ? 'ok' : 'bad'}>
-              {health.status}
+              {health.status === 'ok' ? t('admin.healthStatus.ok') : health.status}
             </strong>
           </article>
           <article className="stat">
-            <span className="stat-label">Database</span>
+            <span className="stat-label">{t('admin.stat.database')}</span>
             <strong className={health.database ? 'ok' : 'bad'}>
-              {health.database ? 'connected' : 'unavailable'}
+              {health.database
+                ? t('admin.status.connected')
+                : t('admin.status.unavailable')}
             </strong>
           </article>
           <article className="stat">
-            <span className="stat-label">ffmpeg</span>
+            <span className="stat-label">{t('admin.stat.ffmpeg')}</span>
             <strong className={health.ffmpeg ? 'ok' : 'bad'}>
-              {health.ffmpeg ? 'available' : 'missing'}
+              {health.ffmpeg ? t('admin.status.available') : t('common.missing')}
             </strong>
           </article>
           <article className="stat">
-            <span className="stat-label">Media</span>
+            <span className="stat-label">{t('admin.stat.media')}</span>
             <strong>{health.media_count}</strong>
           </article>
         </section>
@@ -310,21 +351,21 @@ export default function Admin() {
 
       <section className="panel">
         <div className="panel-head">
-          <h2>Sources</h2>
+          <h2>{t('admin.sources.title')}</h2>
           <button type="button" className="ghost" onClick={() => void load()}>
-            Refresh
+            {t('admin.refresh')}
           </button>
         </div>
         {sources.length === 0 ? (
-          <p className="muted">No sources. Add one through the API.</p>
+          <p className="muted">{t('admin.sources.empty')}</p>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>URI</th>
-                  <th>Kind</th>
-                  <th>Enabled</th>
+                  <th>{t('admin.table.uri')}</th>
+                  <th>{t('admin.table.kind')}</th>
+                  <th>{t('admin.table.enabled')}</th>
                   <th />
                 </tr>
               </thead>
@@ -335,10 +376,10 @@ export default function Admin() {
                     <td>{source.kind}</td>
                     <td>
                       {source.archived_at
-                        ? 'archived'
+                        ? t('admin.value.archived')
                         : source.enabled
-                          ? 'yes'
-                          : 'no'}
+                          ? t('admin.value.yes')
+                          : t('admin.value.no')}
                     </td>
                     <td className="right">
                       {source.archived_at ? (
@@ -349,14 +390,14 @@ export default function Admin() {
                             disabled={toggling === source.id}
                             onClick={() => void archive(source)}
                           >
-                            Restore
+                            {t('admin.action.restore')}
                           </button>{' '}
                           <button
                             type="button"
                             className="ghost"
                             onClick={() => startRemap(source)}
                           >
-                            Remap
+                            {t('admin.action.remap')}
                           </button>{' '}
                           <button
                             type="button"
@@ -364,7 +405,9 @@ export default function Admin() {
                             disabled={removing === source.id}
                             onClick={() => void remove(source)}
                           >
-                            {removing === source.id ? 'Deleting…' : 'Delete'}
+                            {removing === source.id
+                              ? t('admin.action.deleting')
+                              : t('admin.action.delete')}
                           </button>
                         </>
                       ) : (
@@ -375,7 +418,9 @@ export default function Admin() {
                             disabled={toggling === source.id}
                             onClick={() => void toggle(source)}
                           >
-                            {source.enabled ? 'Disable' : 'Enable'}
+                            {source.enabled
+                              ? t('admin.action.disable')
+                              : t('admin.action.enable')}
                           </button>{' '}
                           <button
                             type="button"
@@ -383,14 +428,14 @@ export default function Admin() {
                             disabled={toggling === source.id}
                             onClick={() => void archive(source)}
                           >
-                            Archive
+                            {t('admin.action.archive')}
                           </button>{' '}
                           <button
                             type="button"
                             className="ghost"
                             onClick={() => startRemap(source)}
                           >
-                            Remap
+                            {t('admin.action.remap')}
                           </button>{' '}
                           <button
                             type="button"
@@ -398,7 +443,9 @@ export default function Admin() {
                             disabled={scanning === source.id || !source.enabled}
                             onClick={() => void scan(source.id)}
                           >
-                            {scanning === source.id ? 'Queueing…' : 'Scan'}
+                            {scanning === source.id
+                              ? t('admin.action.queueing')
+                              : t('admin.action.scan')}
                           </button>
                         </>
                       )}
@@ -412,14 +459,15 @@ export default function Admin() {
         {remapFor && (
           <div className="remap-form">
             <p className="muted">
-              Remap <span className="mono">{remapFor.uri}</span> to a new local
-              directory:
+              {t('admin.remap.prefix')}
+              <span className="mono">{remapFor.uri}</span>
+              {t('admin.remap.suffix')}
             </p>
             <div className="remap-row">
               <input
                 className="search"
                 value={remapUri}
-                placeholder="New local directory"
+                placeholder={t('admin.remap.placeholder')}
                 onChange={event => {
                   setRemapUri(event.target.value)
                   setRemapReport(null)
@@ -431,7 +479,7 @@ export default function Admin() {
                 disabled={!remapUri.trim() || remapBusy}
                 onClick={() => void previewRemap()}
               >
-                {remapBusy ? 'Checking…' : 'Preview'}
+                {remapBusy ? t('admin.action.checking') : t('admin.action.preview')}
               </button>
               <button
                 type="button"
@@ -439,7 +487,7 @@ export default function Admin() {
                 disabled={!remapReport || remapBusy}
                 onClick={() => void applyRemap()}
               >
-                Apply
+                {t('admin.action.apply')}
               </button>
               <button
                 type="button"
@@ -449,13 +497,16 @@ export default function Admin() {
                   setRemapReport(null)
                 }}
               >
-                Cancel
+                {t('admin.action.cancel')}
               </button>
             </div>
             {remapReport && (
               <p className="muted">
-                remapped {remapReport.remapped} · missing {remapReport.missing} ·
-                skipped {remapReport.skipped}
+                {t('admin.remap.report', {
+                  remapped: remapReport.remapped,
+                  missing: remapReport.missing,
+                  skipped: remapReport.skipped,
+                })}
                 {remapReport.warnings.length > 0
                   ? ` · ${remapReport.warnings.join('; ')}`
                   : ''}
@@ -467,58 +518,57 @@ export default function Admin() {
 
       <section className="panel">
         <div className="panel-head">
-          <h2>Cache</h2>
+          <h2>{t('admin.cache.title')}</h2>
           <button
             type="button"
             className="ghost"
             disabled={gcRunning}
             onClick={() => void collectGarbage()}
           >
-            {gcRunning ? 'Running…' : 'Run GC'}
+            {gcRunning ? t('admin.cache.running') : t('admin.cache.run')}
           </button>
         </div>
         {cache ? (
           <dl className="paths">
-            <dt>Total</dt>
+            <dt>{t('admin.cache.total')}</dt>
             <dd>{formatBytes(cache.total_bytes)}</dd>
-            <dt>Transcodes</dt>
+            <dt>{t('admin.cache.transcodes')}</dt>
             <dd>
               {cache.transcode_count} · {formatBytes(cache.transcode_bytes)}
             </dd>
-            <dt>Thumbnails</dt>
+            <dt>{t('admin.cache.thumbnails')}</dt>
             <dd>
               {cache.thumbnail_count} · {formatBytes(cache.thumbnail_bytes)}
             </dd>
           </dl>
         ) : (
-          <p className="muted">Cache stats unavailable.</p>
+          <p className="muted">{t('admin.cache.unavailable')}</p>
         )}
         {gcResult && (
           <p className="muted">
-            Removed {gcResult.removed} variant(s), freed{' '}
-            {formatBytes(gcResult.freed_bytes)}; {gcResult.kept} kept.
+            {t('admin.cache.gcDone', {
+              removed: gcResult.removed,
+              freed: formatBytes(gcResult.freed_bytes),
+              kept: gcResult.kept,
+            })}
           </p>
         )}
         {latestGc && (
           <p className="muted">
-            Last GC job: {latestGc.status}
-            {gcJobSummary(latestGc) ? ` · ${gcJobSummary(latestGc)}` : ''}
+            {t('admin.cache.lastJob', { status: statusLabel(latestGc.status, t) })}
+            {gcJobSummary(latestGc, t) ? ` · ${gcJobSummary(latestGc, t)}` : ''}
           </p>
         )}
       </section>
 
       <section className="panel">
         <div className="panel-head">
-          <h2>Backup</h2>
+          <h2>{t('admin.backup.title')}</h2>
           <a className="ghost" href="/api/v1/backup" download>
-            Export JSON
+            {t('admin.backup.export')}
           </a>
         </div>
-        <p className="muted">
-          Import merges liked/favorite flags and never lowers existing progress.
-          Restore is the one-step path for a fresh data dir: import, scan/probe/
-          thumbnail, replay states.
-        </p>
+        <p className="muted">{t('admin.backup.help')}</p>
         <div className="backup-import">
           <input
             type="file"
@@ -534,44 +584,47 @@ export default function Admin() {
             disabled={!backupFile || backupBusy}
             onClick={() => void importSelectedBackup()}
           >
-            {backupBusy ? 'Working…' : 'Import'}
+            {backupBusy ? t('admin.action.working') : t('admin.action.import')}
           </button>
           <button
             type="button"
             className="ghost"
             disabled={!backupFile || backupBusy}
             onClick={() => void restoreSelectedBackup()}
-            title="Import, scan/probe/thumbnail, then replay states"
+            title={t('admin.backup.restoreTitle')}
           >
-            Restore
+            {t('admin.action.restore')}
           </button>
         </div>
         {backupReport && (
           <p className="muted">
-            Sources +{backupReport.sources_added} · states imported{' '}
-            {backupReport.imported} · unchanged {backupReport.unchanged} ·
-            missing {backupReport.missing}
+            {t('admin.backup.report', {
+              sources: backupReport.sources_added,
+              imported: backupReport.imported,
+              unchanged: backupReport.unchanged,
+              missing: backupReport.missing,
+            })}
             {backupReport.warnings.length > 0
-              ? ` · warnings ${backupReport.warnings.length}`
+              ? ` · ${t('admin.backup.warnings', { count: backupReport.warnings.length })}`
               : ''}
           </p>
         )}
       </section>
 
       <section className="panel">
-        <h2>Recent jobs</h2>
+        <h2>{t('admin.jobs.title')}</h2>
         {jobs.length === 0 ? (
-          <p className="muted">No jobs yet.</p>
+          <p className="muted">{t('admin.jobs.empty')}</p>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Kind</th>
-                  <th>Status</th>
-                  <th>Progress</th>
-                  <th>Attempts</th>
-                  <th>Error</th>
+                  <th>{t('admin.table.kind')}</th>
+                  <th>{t('admin.status')}</th>
+                  <th>{t('admin.table.progress')}</th>
+                  <th>{t('admin.table.attempts')}</th>
+                  <th>{t('admin.table.error')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -579,7 +632,9 @@ export default function Admin() {
                   <tr key={job.id}>
                     <td className="mono">{job.kind}</td>
                     <td>
-                      <span className={`pill ${job.status}`}>{job.status}</span>
+                      <span className={`pill ${job.status}`}>
+                        {statusLabel(job.status, t)}
+                      </span>
                     </td>
                     <td>{Math.round((job.progress ?? 0) * 100)}%</td>
                     <td>
@@ -595,21 +650,21 @@ export default function Admin() {
       </section>
 
       <section className="panel">
-        <h2>Scan history</h2>
+        <h2>{t('admin.scans.title')}</h2>
         {runs.length === 0 ? (
-          <p className="muted">No scans yet.</p>
+          <p className="muted">{t('admin.scans.empty')}</p>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Source</th>
-                  <th>Status</th>
-                  <th>Discovered</th>
-                  <th>Added</th>
-                  <th>Updated</th>
-                  <th>Missing</th>
-                  <th>Failed</th>
+                  <th>{t('admin.table.source')}</th>
+                  <th>{t('admin.status')}</th>
+                  <th>{t('admin.table.discovered')}</th>
+                  <th>{t('admin.table.added')}</th>
+                  <th>{t('admin.table.updated')}</th>
+                  <th>{t('admin.table.missing')}</th>
+                  <th>{t('admin.table.failed')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,7 +672,9 @@ export default function Admin() {
                   <tr key={run.id}>
                     <td className="mono">{run.source_uri}</td>
                     <td>
-                      <span className={`pill ${run.status}`}>{run.status}</span>
+                      <span className={`pill ${run.status}`}>
+                        {statusLabel(run.status, t)}
+                      </span>
                     </td>
                     <td>{run.discovered}</td>
                     <td>{run.added}</td>
@@ -634,15 +691,15 @@ export default function Admin() {
 
       {health && (
         <section className="panel">
-          <h2>Paths</h2>
+          <h2>{t('admin.paths.title')}</h2>
           <dl className="paths">
-            <dt>Data</dt>
+            <dt>{t('admin.paths.data')}</dt>
             <dd className="mono">{health.data_dir}</dd>
-            <dt>Thumbnails</dt>
+            <dt>{t('admin.paths.thumbnails')}</dt>
             <dd className="mono">{health.thumbnail_dir}</dd>
-            <dt>Transcodes</dt>
+            <dt>{t('admin.paths.transcodes')}</dt>
             <dd className="mono">{health.transcode_dir}</dd>
-            <dt>Version</dt>
+            <dt>{t('admin.paths.version')}</dt>
             <dd className="mono">{health.version}</dd>
           </dl>
         </section>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Admin from './Admin'
+import LangSwitch from './LangSwitch'
 import Reels from './Reels'
 import {
   displayTitle,
@@ -14,12 +15,13 @@ import {
   type MediaPage,
   type Playback,
 } from './api'
+import { useLang, type Translate, type TranslationKey } from './i18n'
 import { resumeTarget } from './resume'
 
-const filters: Array<{ id: MediaFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'continue', label: 'Continue' },
-  { id: 'favorites', label: 'Favorites' },
+const filters: Array<{ id: MediaFilter; labelKey: TranslationKey }> = [
+  { id: 'all', labelKey: 'library.filter.all' },
+  { id: 'continue', labelKey: 'library.filter.continue' },
+  { id: 'favorites', labelKey: 'library.filter.favorites' },
 ]
 
 export default function App() {
@@ -29,6 +31,7 @@ export default function App() {
 }
 
 function Library() {
+  const { lang, setLang, t } = useLang()
   const [page, setPage] = useState<MediaPage | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -83,31 +86,34 @@ function Library() {
     <main className="shell">
       <header className="topbar">
         <div>
-          <p className="kicker">Local-first media</p>
+          <p className="kicker">{t('library.kicker')}</p>
           <h1>LocalReel</h1>
         </div>
-        <div className="topbar-right">
+        <div className="topbar-right" style={{ flexWrap: 'wrap', rowGap: '0.5rem' }}>
           <p className="count">
-            {total} {total === 1 ? 'item' : 'items'}
+            {t(total === 1 ? 'library.count.one' : 'library.count.other', {
+              count: total,
+            })}
           </p>
           <a className="nav-link" href="/watch">
-            Reels
+            {t('nav.reels')}
           </a>
           <a className="nav-link" href="/admin">
-            Admin →
+            {t('nav.admin')}
           </a>
+          <LangSwitch lang={lang} onChange={setLang} t={t} />
         </div>
       </header>
 
-      <section className="controls" aria-label="Library controls">
+      <section className="controls" aria-label={t('library.controls')}>
         <input
           className="search"
           type="search"
           value={query}
-          placeholder="Search title, filename or path"
+          placeholder={t('library.search')}
           onChange={event => setQuery(event.target.value)}
         />
-        <div className="filters" role="tablist" aria-label="Filters">
+        <div className="filters" role="tablist" aria-label={t('library.filters')}>
           {filters.map(entry => (
             <button
               key={entry.id}
@@ -117,25 +123,27 @@ function Library() {
               className={filter === entry.id ? 'filter active' : 'filter'}
               onClick={() => setFilter(entry.id)}
             >
-              {entry.label}
+              {t(entry.labelKey)}
             </button>
           ))}
           <button
             type="button"
             className={includeArchived ? 'filter active' : 'filter'}
-            title="Include media from archived sources"
+            title={t('library.filter.archived.title')}
             onClick={() => setIncludeArchived(value => !value)}
           >
-            Archived
+            {t('library.filter.archived')}
           </button>
         </div>
       </section>
 
       {error && <div className="notice error">{error}</div>}
-      {loading && !page && <div className="notice">Loading library…</div>}
+      {loading && !page && <div className="notice">{t('library.loading')}</div>}
       {empty && (
         <div className="notice">
-          No media yet. Add a source with <code>POST /api/v1/sources</code> and run a scan.
+          {t('library.empty.prefix')}
+          <code>POST /api/v1/sources</code>
+          {t('library.empty.suffix')}
         </div>
       )}
 
@@ -152,16 +160,16 @@ function Library() {
                 <img src={thumbnailUrl(item) ?? ''} alt="" loading="lazy" />
               ) : (
                 <div className="placeholder">
-                  {item.missing_at ? 'missing' : item.filename.split('.').pop()}
+                  {item.missing_at ? t('common.missing') : item.filename.split('.').pop()}
                 </div>
               )}
               <span className="duration">{formatDuration(item.duration)}</span>
-              {item.missing_at && <span className="badge">missing</span>}
+              {item.missing_at && <span className="badge">{t('common.missing')}</span>}
             </div>
             <div className="meta">
               <span className="title">{displayTitle(item)}</span>
               <span className="sub">
-                {item.video_codec ?? 'unknown'}
+                {item.video_codec ?? t('common.unknownCodec')}
                 {item.width && item.height ? ` · ${item.width}×${item.height}` : ''}
               </span>
             </div>
@@ -176,20 +184,29 @@ function Library() {
           disabled={loading}
           onClick={() => void load(page.next_cursor ?? 0, true)}
         >
-          {loading ? 'Loading…' : 'Load more'}
+          {loading ? t('library.loadingMore') : t('library.loadMore')}
         </button>
       )}
 
       {selected && (
-        <Player media={selected} onClose={() => setSelected(null)} />
+        <Player media={selected} onClose={() => setSelected(null)} t={t} />
       )}
     </main>
   )
 }
 
-function Player({ media, onClose }: { media: Media; onClose: () => void }) {
+function Player({
+  media,
+  onClose,
+  t,
+}: {
+  media: Media
+  onClose: () => void
+  t: Translate
+}) {
   const [playback, setPlayback] = useState<Playback | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [playFailed, setPlayFailed] = useState(false)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const cancelled = useRef(false)
   const video = useRef<HTMLVideoElement | null>(null)
@@ -297,7 +314,12 @@ function Player({ media, onClose }: { media: Media; onClose: () => void }) {
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-label={displayTitle(media)}>
       <div className="player">
-        <button type="button" className="close" onClick={onClose} aria-label="Close player">
+        <button
+          type="button"
+          className="close"
+          onClick={onClose}
+          aria-label={t('player.close')}
+        >
           ×
         </button>
         {source ? (
@@ -318,21 +340,28 @@ function Player({ media, onClose }: { media: Media; onClose: () => void }) {
               lastSave.current = Date.now()
               saveProgress(event.currentTarget.currentTime, event.currentTarget.duration)
             }}
-            onError={() => setError('Unable to play this file.')}
+            onError={() => setPlayFailed(true)}
           />
         ) : (
           <div className="player-status">
-            {error ?? playback?.message ?? 'Preparing playback…'}
+            {playFailed
+              ? t('player.unable')
+              : (error ?? playback?.message ?? t('player.preparing'))}
           </div>
         )}
         <div className="player-meta">
           <strong>{displayTitle(media)}</strong>
           <span>
-            {media.video_codec ?? 'unknown'} · {formatDuration(media.duration)}
-            {playback?.mode === 'preparing' ? ' · transcoding' : ''}
+            {media.video_codec ?? t('common.unknownCodec')} ·{' '}
+            {formatDuration(media.duration)}
+            {playback?.mode === 'preparing' ? ` · ${t('player.transcoding')}` : ''}
           </span>
         </div>
-        {error && <div className="notice error">{error}</div>}
+        {(playFailed || error) && (
+          <div className="notice error">
+            {playFailed ? t('player.unable') : error}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import LangSwitch from './LangSwitch'
 import {
   displayTitle,
   fetchMedia,
@@ -10,9 +11,11 @@ import {
   type Media,
   type Playback,
 } from './api'
+import { useLang, type Translate } from './i18n'
 import { resumeTarget } from './resume'
 
 export default function Reels() {
+  const { lang, setLang, t } = useLang()
   const [items, setItems] = useState<Media[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,23 +52,35 @@ export default function Reels() {
   return (
     <div className="reels" ref={scroller} onScroll={onScroll}>
       <a className="reels-back" href="/">
-        ← Library
+        {t('nav.library.back')}
       </a>
-      {loading && <div className="reels-empty">Loading reels…</div>}
+      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 5 }}>
+        <LangSwitch lang={lang} onChange={setLang} t={t} variant="dark" />
+      </div>
+      {loading && <div className="reels-empty">{t('reels.loading')}</div>}
       {error && <div className="reels-empty error">{error}</div>}
       {!loading && !error && items.length === 0 && (
-        <div className="reels-empty">No media yet. Scan a source first.</div>
+        <div className="reels-empty">{t('reels.empty')}</div>
       )}
       {items.map((media, index) => (
-        <ReelSlide key={media.id} media={media} active={index === active} />
+        <ReelSlide key={media.id} media={media} active={index === active} t={t} />
       ))}
     </div>
   )
 }
 
-function ReelSlide({ media, active }: { media: Media; active: boolean }) {
+function ReelSlide({
+  media,
+  active,
+  t,
+}: {
+  media: Media
+  active: boolean
+  t: Translate
+}) {
   const [playback, setPlayback] = useState<Playback | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [playFailed, setPlayFailed] = useState(false)
   const [muted, setMuted] = useState(true)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const video = useRef<HTMLVideoElement | null>(null)
@@ -120,6 +135,7 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
     let cancelled = false
     let timer: number | undefined
     setError(null)
+    setPlayFailed(false)
     setPlayback(null)
 
     const resolve = async () => {
@@ -216,29 +232,33 @@ function ReelSlide({ media, active }: { media: Media; active: boolean }) {
               lastSave.current = Date.now()
               save(event.currentTarget.currentTime, event.currentTarget.duration)
             }}
-            onError={() => setError('Unable to play this file.')}
+            onError={() => setPlayFailed(true)}
           />
         ) : (
           <div className="reel-status">
-            {error ?? playback?.message ?? 'Preparing playback…'}
+            {playFailed
+              ? t('player.unable')
+              : (error ?? playback?.message ?? t('player.preparing'))}
           </div>
         )}
       </div>
 
       <div className="reel-overlay">
-        <p className="reel-kicker">Reel · {formatDuration(media.duration)}</p>
+        <p className="reel-kicker">
+          {t('reels.kicker', { duration: formatDuration(media.duration) })}
+        </p>
         <h2>{displayTitle(media)}</h2>
         <p className="reel-meta">
-          {media.video_codec ?? 'unknown'}
+          {media.video_codec ?? t('common.unknownCodec')}
           {media.width && media.height ? ` · ${media.width}×${media.height}` : ''}
-          {active ? ' · playing' : ''}
+          {active ? ` · ${t('reels.playing')}` : ''}
         </p>
         <div className="reel-actions">
           <button type="button" className="reel-button" onClick={() => setMuted(m => !m)}>
-            {muted ? 'Unmute' : 'Mute'}
+            {muted ? t('reels.unmute') : t('reels.mute')}
           </button>
           <a className="reel-button" href="/">
-            Library
+            {t('nav.library')}
           </a>
         </div>
       </div>
