@@ -2,19 +2,19 @@
  * Pure helpers for the scroll feed (Reels).
  *
  * Everything here is deliberately free of React and DOM access so it can be
- * unit-tested with `node --test`. The feed API does not expose media
- * dimensions, so the aspect-ratio decision happens after the video element
- * reports its metadata; the rest is formatting, list bookkeeping and gesture
- * classification.
+ * unit-tested with `node --test`. The rest is formatting, list bookkeeping and
+ * gesture classification.
  */
 import type { FeedItem, Media } from './api'
 
 /**
- * Minimum width/height ratio treated as "wide" (16:9-ish) content. Wide frames
- * are full-bleed; narrower frames (4:3, portrait phone clips) keep their whole
- * picture instead of being cropped.
+ * Largest width/height ratio that is still shown full-bleed.
+ *
+ * Only portrait or square clips fill the screen. A 16:9 episode inside a
+ * 390×844 viewport would keep roughly a quarter of its width when cropped, so
+ * landscape video is letterboxed instead — the frame is the content.
  */
-export const COVER_MIN_ASPECT = 1.55
+export const COVER_MAX_ASPECT = 1.05
 
 export type ObjectFit = 'cover' | 'contain'
 
@@ -23,7 +23,7 @@ export function objectFitForVideo(width: number, height: number): ObjectFit {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     return 'contain'
   }
-  return width / height >= COVER_MIN_ASPECT ? 'cover' : 'contain'
+  return width / height <= COVER_MAX_ASPECT ? 'cover' : 'contain'
 }
 
 /**
@@ -110,11 +110,54 @@ export function preloadIndexes(length: number, active: number, ahead = 2): numbe
   return indexes
 }
 
-/** Title shown in the info layer: stored title, else the filename sans extension. */
-export function feedDisplayTitle(item: Pick<FeedItem, 'title' | 'filename'>): string {
-  const title = item.title?.trim()
-  if (title) return title
+/**
+ * How many slides ahead to prepare.
+ *
+ * A full re-encode of a long episode costs minutes of CPU, so a transient
+ * neighbour two slides away is not worth preparing ahead of time; direct play
+ * and remux are cheap and can be warmed two ahead.
+ */
+export function preloadAhead(
+  items: ReadonlyArray<Pick<FeedItem, 'playback'>>,
+  active: number,
+  defaultAhead = 2,
+): number {
+  const second = items[active + 2]
+  if (second && second.playback === 'transcode') return Math.min(defaultAhead, 1)
+  return defaultAhead
+}
+
+/** Strip release tags from a raw name for display: `[Group] Show [01][1080p]` → `Show`. */
+export function cleanDisplayTitle(raw: string): string {
+  let text = raw.replace(/\.[a-z0-9]{2,5}$/i, ' ')
+  let previous = ''
+  while (text !== previous) {
+    previous = text
+    text = text.replace(/\[[^\]]*\]|\([^)]*\)|【[^】]*】/g, ' ')
+  }
+  return text.split(/\s+/).filter(Boolean).join(' ').trim()
+}
+
+/**
+ * Title shown in the info layer: cleaned stored title, then the cleaned file
+ * name, then the series folder name (a folder-named movie), then the raw stem.
+ */
+export function feedDisplayTitle(
+  item: Pick<FeedItem, 'title' | 'filename' | 'series_title'>,
+): string {
+  const fromTitle = item.title ? cleanDisplayTitle(item.title) : ''
+  if (fromTitle) return fromTitle
+  const fromFile = cleanDisplayTitle(item.filename)
+  if (fromFile) return fromFile
+  const series = item.series_title?.trim()
+  if (series) return series
   return item.filename.replace(/\.[a-z0-9]{2,5}$/i, '')
+}
+
+/** Thumbnail URL for a feed item's blurred backdrop, or null when it has none. */
+export function feedThumbnailUrl(item: Pick<FeedItem, 'thumbnail_path'>): string | null {
+  if (!item.thumbnail_path) return null
+  return `/thumbnails/${encodeURIComponent(item.thumbnail_path)}`
 }
 
 /**
@@ -123,7 +166,7 @@ export function feedDisplayTitle(item: Pick<FeedItem, 'title' | 'filename'>): st
  * not know about further episodes.
  */
 export function feedItemFromMedia(
-  media: Pick<Media, 'id' | 'title' | 'filename' | 'duration' | 'width' | 'height'>,
+  media: Pick<Media, 'id' | 'title' | 'filename' | 'duration' | 'width' | 'height' | 'thumbnail_path'>,
 ): FeedItem {
   return {
     id: media.id,
@@ -139,7 +182,9 @@ export function feedItemFromMedia(
     finished: false,
     favorite: false,
     liked: false,
+    playback: 'direct',
     next_id: null,
     created_at: 0,
+    thumbnail_path: media.thumbnail_path,
   }
 }

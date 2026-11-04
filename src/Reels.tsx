@@ -18,11 +18,13 @@ import {
 import {
   feedDisplayTitle,
   feedItemFromMedia,
+  feedThumbnailUrl,
   formatClock,
   indexOfId,
   mergeFeedItems,
   objectFitForFeedItem,
   objectFitForVideo,
+  preloadAhead,
   preloadIndexes,
   progressRatio,
   swipeDirection,
@@ -168,7 +170,7 @@ export default function Reels() {
 
   // Warm the active slide and the next two so a swipe never waits on prepare.
   useEffect(() => {
-    const indexes = preloadIndexes(items.length, active, PRELOAD_AHEAD)
+    const indexes = preloadIndexes(items.length, active, preloadAhead(items, active, PRELOAD_AHEAD))
     wantedRef.current = new Set(indexes.map(index => items[index].id))
     for (const index of indexes) ensurePlayback(items[index].id)
   }, [active, ensurePlayback, items])
@@ -432,14 +434,13 @@ function ReelSlide({
   const preparing = playback?.mode === 'preparing'
   const seen = resumeTarget(item.position, item.duration)
   const title = feedDisplayTitle(item)
+  const backdrop = feedThumbnailUrl(item)
   const seriesTitle = item.series_title?.trim() ?? ''
-  const heading = seriesTitle || title
-  const subtitle =
-    item.episode != null
-      ? t('reels.episode', { episode: item.episode })
-      : heading === title
-        ? ''
-        : title
+  const hasEpisode = item.episode != null
+  // Episodes are labelled by series + "第 N 集"; a movie uses its own (cleaned)
+  // title, and only falls back to the folder name when the file name is noise.
+  const heading = hasEpisode ? seriesTitle || title : title
+  const subtitle = hasEpisode ? t('reels.episode', { episode: item.episode ?? 0 }) : ''
 
   /** Normal progress saves go through the shared API helper. */
   const save = useCallback(
@@ -852,6 +853,13 @@ function ReelSlide({
         onPointerCancel={handlePointerCancel}
         onContextMenu={event => event.preventDefault()}
       >
+        {backdrop && (
+          <div
+            className="reel-backdrop"
+            style={{ backgroundImage: `url("${backdrop}")` }}
+            aria-hidden="true"
+          />
+        )}
         {url && (
           <video
             ref={video}

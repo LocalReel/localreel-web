@@ -3,14 +3,16 @@ import test from 'node:test'
 
 import type { FeedItem } from './api.ts'
 import {
-  COVER_MIN_ASPECT,
+  COVER_MAX_ASPECT,
   feedDisplayTitle,
+  feedThumbnailUrl,
   feedItemFromMedia,
   formatClock,
   indexOfId,
   mergeFeedItems,
   objectFitForFeedItem,
   objectFitForVideo,
+  preloadAhead,
   preloadIndexes,
   progressRatio,
   swipeDirection,
@@ -37,18 +39,17 @@ function feedItem(id: number, overrides: Partial<FeedItem> = {}): FeedItem {
   }
 }
 
-test('wide frames are full-bleed, narrow frames keep the whole picture', () => {
-  assert.equal(COVER_MIN_ASPECT, 1.55)
-  assert.equal(objectFitForVideo(1920, 1080), 'cover')
-  assert.equal(objectFitForVideo(1280, 720), 'cover')
-  assert.equal(objectFitForVideo(3840, 2160), 'cover')
-  // Exactly at the threshold counts as wide.
-  assert.equal(objectFitForVideo(1550, 1000), 'cover')
-  assert.equal(objectFitForVideo(1549, 1000), 'contain')
-  // 4:3, 1.5:1 and portrait phone clips are contained so nothing is cropped.
+test('portrait fills the screen, landscape keeps the whole picture', () => {
+  assert.equal(COVER_MAX_ASPECT, 1.05)
+  // Portrait and square clips fill the phone; landscape is letterboxed because
+  // cropping 16:9 into 390x844 would keep only about a quarter of the width.
+  assert.equal(objectFitForVideo(1080, 1920), 'cover')
+  assert.equal(objectFitForVideo(1000, 1000), 'cover')
+  assert.equal(objectFitForVideo(1050, 1000), 'cover')
+  assert.equal(objectFitForVideo(1060, 1000), 'contain')
+  assert.equal(objectFitForVideo(1920, 1080), 'contain')
+  assert.equal(objectFitForVideo(1280, 720), 'contain')
   assert.equal(objectFitForVideo(1440, 1080), 'contain')
-  assert.equal(objectFitForVideo(1500, 1000), 'contain')
-  assert.equal(objectFitForVideo(1080, 1920), 'contain')
   assert.equal(objectFitForVideo(320, 240), 'contain')
   // Unknown metadata falls back to the non-cropping mode.
   assert.equal(objectFitForVideo(0, 0), 'contain')
@@ -57,9 +58,9 @@ test('wide frames are full-bleed, narrow frames keep the whole picture', () => {
 })
 
 test('objectFitForFeedItem uses ffprobe dimensions and tolerates nulls', () => {
-  assert.equal(objectFitForFeedItem({ width: 1920, height: 1080 }), 'cover')
+  assert.equal(objectFitForFeedItem({ width: 1920, height: 1080 }), 'contain')
   assert.equal(objectFitForFeedItem({ width: 320, height: 240 }), 'contain')
-  assert.equal(objectFitForFeedItem({ width: 1080, height: 1920 }), 'contain')
+  assert.equal(objectFitForFeedItem({ width: 1080, height: 1920 }), 'cover')
   // Unknown dimensions fall back to the non-cropping mode until the video
   // element reports its own metadata.
   assert.equal(objectFitForFeedItem({ width: null, height: null }), 'contain')
@@ -149,14 +150,32 @@ test('preloadIndexes keeps the active slide plus the next two warm', () => {
   assert.deepEqual(preloadIndexes(10, 4, 0), [4])
 })
 
+test('preloadAhead skips a full re-encode two slides away', () => {
+  const item = (playback: FeedItem['playback']) => ({ playback })
+  assert.equal(preloadAhead([item('direct'), item('direct'), item('direct')], 0), 2)
+  assert.equal(preloadAhead([item('direct'), item('remux'), item('remux')], 0), 2)
+  assert.equal(preloadAhead([item('direct'), item('direct'), item('transcode')], 0), 1)
+  // The end of the feed has nothing to warm.
+  assert.equal(preloadAhead([item('direct'), item('direct')], 0), 2)
+  assert.equal(preloadAhead([], 0), 2)
+})
+
 test('feedDisplayTitle prefers the title and strips known extensions', () => {
   assert.equal(feedDisplayTitle({ title: 'Episode 1', filename: 'x.mkv' }), 'Episode 1')
   assert.equal(feedDisplayTitle({ title: '   ', filename: 'raw.mkv' }), 'raw')
   assert.equal(
     feedDisplayTitle({ title: null, filename: '[Group] Show [01][1080p].mp4' }),
-    '[Group] Show [01][1080p]',
+    'Show',
   )
   assert.equal(feedDisplayTitle({ title: null, filename: 'no-extension' }), 'no-extension')
+  assert.equal(
+    feedDisplayTitle({
+      title: '[][Movie 01][BDRIP][x264_AAC][720P][GB]',
+      filename: '[][Movie 01][BDRIP][x264_AAC][720P][GB].mp4',
+      series_title: '青之驱魔师剧场版',
+    }),
+    '青之驱魔师剧场版',
+  )
 })
 
 test('feedItemFromMedia fills the fallback item without series metadata', () => {
@@ -167,6 +186,7 @@ test('feedItemFromMedia fills the fallback item without series metadata', () => 
     duration: 125.5,
     width: 1280,
     height: 720,
+    thumbnail_path: 'thumb-42.jpg',
   })
   assert.equal(item.id, 42)
   assert.equal(item.title, 'Fallback')

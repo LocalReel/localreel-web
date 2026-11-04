@@ -42,8 +42,10 @@ export interface FeedItem {
   finished: boolean
   favorite: boolean
   liked: boolean
+  playback: 'direct' | 'remux' | 'transcode'
   next_id: number | null
   created_at: number
+  thumbnail_path: string | null
 }
 
 export interface FeedPage {
