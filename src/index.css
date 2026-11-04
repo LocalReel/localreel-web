@@ -613,6 +613,37 @@ body.reels-open {
   object-fit: contain;
 }
 
+/* Douyin-style "watch full screen" pill, placed just under the picture. */
+.reel-fullscreen {
+  position: absolute;
+  left: 50%;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(247, 244, 237, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 13, 10, 0.5);
+  color: rgba(247, 244, 237, 0.9);
+  font-size: 0.72rem;
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+
+.reel-fullscreen svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.reel-stage:fullscreen {
+  background: #000;
+}
+
+.reel-stage:fullscreen .reel-backdrop {
+  display: none;
+}
+
 .reel-status {
   position: absolute;
   inset: 0;

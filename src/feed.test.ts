@@ -8,7 +8,9 @@ import {
   feedThumbnailUrl,
   feedItemFromMedia,
   formatClock,
+  inSpeedZone,
   indexOfId,
+  isLandscape,
   mergeFeedItems,
   objectFitForFeedItem,
   objectFitForVideo,
@@ -148,6 +150,22 @@ test('preloadIndexes keeps the active slide plus the next two warm', () => {
   assert.deepEqual(preloadIndexes(10, -3), [0, 1, 2])
   // ahead=0 only preloads the active slide.
   assert.deepEqual(preloadIndexes(10, 4, 0), [4])
+})
+
+test('landscape detection and the right-side speed zone', () => {
+  assert.equal(isLandscape(1920, 1080), true)
+  assert.equal(isLandscape(1280, 720), true)
+  assert.equal(isLandscape(1440, 1080), true)
+  assert.equal(isLandscape(1080, 1920), false)
+  assert.equal(isLandscape(1000, 1000), false)
+  assert.equal(isLandscape(null, 1080), false)
+  assert.equal(isLandscape(0, 0), false)
+
+  const rect = { left: 100, width: 300 }
+  assert.equal(inSpeedZone(100 + 300 * 0.7, rect), true)
+  assert.equal(inSpeedZone(100 + 300 * (2 / 3), rect), true)
+  assert.equal(inSpeedZone(100 + 300 * 0.5, rect), false)
+  assert.equal(inSpeedZone(Number.NaN, rect), false)
 })
 
 test('preloadAhead skips a full re-encode two slides away', () => {

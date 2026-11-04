@@ -20,7 +20,9 @@ import {
   feedItemFromMedia,
   feedThumbnailUrl,
   formatClock,
+  inSpeedZone,
   indexOfId,
+  isLandscape,
   mergeFeedItems,
   objectFitForFeedItem,
   objectFitForVideo,
@@ -427,6 +429,67 @@ function ReelSlide({
   const lastTap = useRef<{ time: number; x: number; y: number } | null>(null)
   const scrub = useRef<ScrubState | null>(null)
   const track = useRef<HTMLDivElement | null>(null)
+  const stage = useRef<HTMLDivElement | null>(null)
+  const [videoBox, setVideoBox] = useState<{ top: number; bottom: number } | null>(null)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [intrinsic, setIntrinsic] = useState<{ width: number; height: number } | null>(null)
+
+  const landscape = isLandscape(
+    intrinsic?.width ?? item.width,
+    intrinsic?.height ?? item.height,
+  )
+
+  /** Letterboxed video rect inside the stage, for placing the fullscreen pill. */
+  const measureVideoBox = useCallback(() => {
+    const element = video.current
+    const stageElement = stage.current
+    if (!element || !stageElement) return
+    const stageRect = stageElement.getBoundingClientRect()
+    const width = element.videoWidth
+    const height = element.videoHeight
+    if (!width || !height || stageRect.height <= 0) return
+    const scale = Math.min(stageRect.width / width, stageRect.height / height)
+    const shown = height * scale
+    const top = (stageRect.height - shown) / 2
+    setVideoBox({ top, bottom: top + shown })
+  }, [])
+
+  useEffect(() => {
+    measureVideoBox()
+    const onResize = () => measureVideoBox()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [measureVideoBox, fit])
+
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement === stage.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  /** Fullscreen the stage and ask the OS for landscape (Android; iOS falls back
+   *  to the native video player). */
+  const enterFullscreen = useCallback(async () => {
+    const stageElement = stage.current
+    const element = video.current
+    try {
+      if (stageElement?.requestFullscreen) {
+        await stageElement.requestFullscreen()
+        const orientation = screen.orientation as
+          | (ScreenOrientation & { lock?: (orientation: string) => Promise<void> })
+          | undefined
+        try {
+          await orientation?.lock?.('landscape')
+        } catch {
+          // Orientation lock is best-effort (desktop, iOS).
+        }
+      } else if (element && 'webkitEnterFullscreen' in element) {
+        (element as HTMLVideoElement & { webkitEnterFullscreen: () => void }).webkitEnterFullscreen()
+      }
+    } catch {
+      // The browser's own fullscreen control still works.
+    }
+  }, [])
 
   const url =
     playback?.mode === 'direct' || playback?.mode === 'ready' ? playback.url : undefined
@@ -560,6 +623,8 @@ function ReelSlide({
   const handleLoadedMetadata = (event: SyntheticEvent<HTMLVideoElement>) => {
     const element = event.currentTarget
     setFit(objectFitForVideo(element.videoWidth, element.videoHeight))
+    setIntrinsic({ width: element.videoWidth, height: element.videoHeight })
+    measureVideoBox()
     const total = mediaDuration(element, item.duration)
     setDuration(total)
     const target = resumeAt.current
@@ -653,20 +718,24 @@ function ReelSlide({
       }
     }
     if (longTimer.current != null) window.clearTimeout(longTimer.current)
-    longTimer.current = window.setTimeout(() => {
-      const state = gesture.current
-      if (!state || state.moved) return
-      const element = video.current
-      if (!element) return
-      state.longPressed = true
-      setLongPressing(true)
-      element.playbackRate = 2
-      if (element.paused) {
-        void element.play().catch(() => {
-          // Ignore: the speed indicator still shows.
-        })
-      }
-    }, LONG_PRESS_MS)
+    // Temp speed lives on the right third only (Douyin-style); the rest of the
+    // surface is for tap, double-tap and swipe.
+    if (inSpeedZone(event.clientX, event.currentTarget.getBoundingClientRect())) {
+      longTimer.current = window.setTimeout(() => {
+        const state = gesture.current
+        if (!state || state.moved) return
+        const element = video.current
+        if (!element) return
+        state.longPressed = true
+        setLongPressing(true)
+        element.playbackRate = 2
+        if (element.paused) {
+          void element.play().catch(() => {
+            // Ignore: the speed indicator still shows.
+          })
+        }
+      }, LONG_PRESS_MS)
+    }
   }
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -847,6 +916,7 @@ function ReelSlide({
     <section className={`reel${active ? ' active' : ''}`} aria-label={heading}>
       <div
         className="reel-stage"
+        ref={stage}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -883,6 +953,19 @@ function ReelSlide({
             <span className="reel-spinner" aria-hidden="true" />
             <p>{preparing ? t('reels.transcoding') : t('player.preparing')}</p>
           </div>
+        )}
+
+        {landscape && !fullscreen && (
+          <button
+            type="button"
+            className="reel-fullscreen"
+            data-gesture="ignore"
+            style={videoBox ? { top: videoBox.bottom + 12 } : undefined}
+            onClick={() => void enterFullscreen()}
+          >
+            <RotateIcon />
+            <span>{t('reels.fullscreen')}</span>
+          </button>
         )}
 
         {active && paused && !ended && !failed && url && (
@@ -1016,6 +1099,38 @@ function BookmarkIcon({ filled = false }: { filled?: boolean }) {
         fill={filled ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function RotateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect
+        x="8"
+        y="3.2"
+        width="8"
+        height="15.6"
+        rx="2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M10.6 16.4h2.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M4.6 8.6a7.6 7.6 0 0 1 2.3-2.9M3.8 5.2l-.2 3.6 3.6.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>

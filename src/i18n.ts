@@ -81,6 +81,7 @@ const en = {
   'reels.error.title': 'Unable to play this file',
   'reels.error.body': 'The file may be missing or transcoding failed.',
   'reels.transcoding': 'Transcoding this file…',
+  'reels.fullscreen': 'Full screen',
   'reels.loadingNext': 'Loading the next episode…',
   'reels.nextFailed': 'Could not load the next episode.',
 
@@ -264,6 +265,7 @@ const zh: Record<TranslationKey, string> = {
   'reels.error.title': '无法播放此文件',
   'reels.error.body': '文件可能缺失，或转码失败。',
   'reels.transcoding': '正在转码此文件…',
+  'reels.fullscreen': '全屏观看',
   'reels.loadingNext': '正在加载下一集…',
   'reels.nextFailed': '无法加载下一集。',
 

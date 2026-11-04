@@ -18,12 +18,40 @@ export const COVER_MAX_ASPECT = 1.05
 
 export type ObjectFit = 'cover' | 'contain'
 
+/** A frame wider than this is "landscape" and gets a fullscreen affordance. */
+export const LANDSCAPE_MIN_ASPECT = 1.2
+
 /** Pick `object-fit` for a video frame from its intrinsic pixel size. */
 export function objectFitForVideo(width: number, height: number): ObjectFit {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     return 'contain'
   }
   return width / height <= COVER_MAX_ASPECT ? 'cover' : 'contain'
+}
+
+/** Whether a frame is landscape (16:9-ish) and benefits from fullscreen. */
+export function isLandscape(width: number | null, height: number | null): boolean {
+  if (width == null || height == null) return false
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return false
+  }
+  return width / height >= LANDSCAPE_MIN_ASPECT
+}
+
+/**
+ * Douyin-style temp-speed zone: long-pressing the right third of the stage
+ * plays at 2× and releasing restores 1×. Keeping it to one side leaves the rest
+ * of the surface free for tap/double-tap/swipe gestures.
+ */
+export function inSpeedZone(
+  clientX: number,
+  rect: { left: number; width: number },
+  share = 2 / 3,
+): boolean {
+  if (!Number.isFinite(clientX) || !Number.isFinite(rect.left) || rect.width <= 0) {
+    return false
+  }
+  return clientX >= rect.left + rect.width * share
 }
 
 /**
