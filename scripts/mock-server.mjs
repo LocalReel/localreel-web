@@ -101,12 +101,39 @@ export async function startMockServer() {
     response.setHeader('X-Frame-Options', 'DENY')
 
     try {
+      if (url.pathname === '/api/v1/feed') {
+        sendJson(response, 200, {
+          items: [
+            {
+              id: media.id,
+              title: media.title,
+              filename: media.filename,
+              series_key: null,
+              series_title: null,
+              episode: null,
+              width: media.width,
+              height: media.height,
+              duration: media.duration,
+              position: state.position,
+              finished: false,
+              favorite: state.favorite,
+              liked: state.liked,
+              playback: 'direct',
+              next_id: null,
+              created_at: 0,
+              thumbnail_path: null,
+            },
+          ],
+          total: 1,
+        })
+        return
+      }
       if (url.pathname === '/api/v1/media') {
         sendJson(response, 200, { items: [media], total: 1, next_cursor: null })
         return
       }
       if (url.pathname === '/api/v1/media/1/state') {
-        if (request.method === 'POST') {
+        if (request.method === 'POST' || request.method === 'PUT') {
           let body = ''
           for await (const chunk of request) body += chunk
           if (body) Object.assign(state, JSON.parse(body))

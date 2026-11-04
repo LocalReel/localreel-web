@@ -115,11 +115,13 @@ try {
     if (actual && actual.ready >= 1 && Math.abs(actual.t - expected) < 3) break
   }
 
-  const stateRequested = mock.requests.some(
-    entry => entry.method === 'GET' && entry.path === '/api/v1/media/1/state',
+  // The feed carries the saved position, so resume must work from `/api/v1/feed`
+  // without a second per-item state request.
+  const feedRequested = mock.requests.some(
+    entry => entry.method === 'GET' && entry.path === '/api/v1/feed',
   )
-  if (!stateRequested) {
-    throw new Error('the UI never requested the media state')
+  if (!feedRequested) {
+    throw new Error('the UI never requested the feed')
   }
   if (!actual) {
     throw new Error('no <video> element in the Reels page')
