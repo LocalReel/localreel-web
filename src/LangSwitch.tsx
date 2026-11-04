@@ -1,16 +1,19 @@
-import { SUPPORTED_LANGS, type Lang, type Translate } from './i18n'
+import { type Lang, type Translate } from './i18n'
 
 interface LangSwitchProps {
   lang: Lang
   onChange: (lang: Lang) => void
   t: Translate
-  /** "dark" reuses the Reels overlay button styling instead of the light pills. */
+  /** "dark" is the translucent variant used over the reels video. */
   variant?: 'light' | 'dark'
 }
 
 /**
- * Compact 中文 / EN toggle. It is driven by the page's own useLang() instance,
- * so switching immediately re-renders that page and persists the choice.
+ * One small globe button instead of a pair of pills.
+ *
+ * Language is a setting, not an action the user needs every session: the UI
+ * already follows the browser language and remembers the choice, so this stays
+ * out of the way and only shows the current language code next to the icon.
  */
 export default function LangSwitch({
   lang,
@@ -18,33 +21,27 @@ export default function LangSwitch({
   t,
   variant = 'light',
 }: LangSwitchProps) {
-  const dark = variant === 'dark'
+  const next: Lang = lang === 'zh' ? 'en' : 'zh'
+  const label = t('lang.label')
   return (
-    <div
-      className={dark ? 'reel-actions' : 'filters'}
-      style={dark ? { marginTop: 0 } : undefined}
-      role="group"
-      aria-label={t('lang.label')}
+    <button
+      type="button"
+      className={`lang-toggle lang-toggle-${variant}`}
+      aria-label={label}
+      title={label}
+      onClick={() => onChange(next)}
     >
-      {SUPPORTED_LANGS.map(option => {
-        const active = option === lang
-        return (
-          <button
-            key={option}
-            type="button"
-            className={dark ? 'reel-button' : active ? 'filter active' : 'filter'}
-            aria-pressed={active}
-            style={
-              dark && active
-                ? { borderColor: '#d7a58e', color: '#d7a58e' }
-                : undefined
-            }
-            onClick={() => onChange(option)}
-          >
-            {t(option === 'zh' ? 'lang.zh' : 'lang.en')}
-          </button>
-        )
-      })}
-    </div>
+      <svg
+        className="lang-toggle-icon"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <ellipse cx="12" cy="12" rx="3.6" ry="8.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M3.8 12h16.4" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+      <span className="lang-toggle-code">{lang === 'zh' ? '中' : 'EN'}</span>
+    </button>
   )
 }

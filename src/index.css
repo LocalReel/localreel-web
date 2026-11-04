@@ -945,13 +945,55 @@ body.reels-open {
 }
 
 .reels-back {
-  padding: 0.45rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
   border-radius: 999px;
-  background: rgba(15, 13, 10, 0.65);
-  color: #f7f4ed;
-  font-size: 0.8rem;
+  background: rgba(15, 13, 10, 0.45);
+  color: rgba(247, 244, 237, 0.92);
+  font-size: 0.74rem;
   text-decoration: none;
   backdrop-filter: blur(8px);
+}
+
+/* Language is a setting, not per-session chrome: one small globe, never a pair
+   of pills competing with the video. */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-height: 2rem;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(120, 110, 96, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: #6f665a;
+  font-size: 0.72rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lang-toggle:hover {
+  border-color: #d7a58e;
+  color: #d7a58e;
+}
+
+.lang-toggle-dark {
+  border-color: rgba(247, 244, 237, 0.18);
+  background: rgba(15, 13, 10, 0.35);
+  color: rgba(247, 244, 237, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+.lang-toggle-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.lang-toggle-code {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .reel-button {
