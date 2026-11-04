@@ -633,6 +633,13 @@ body.reels-open {
   font-size: clamp(1.5rem, 5vw, 2.4rem);
   line-height: 1.1;
   text-shadow: 0 2px 18px rgba(0, 0, 0, 0.5);
+  /* Library filenames are often long and unbroken ("[Group][Title][01]..."),
+     which used to overflow the viewport on phones. Wrap and clamp instead. */
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .reel-meta {
