@@ -20,6 +20,37 @@ export interface MediaPage {
   next_cursor: number | null
 }
 
+/**
+ * One item of the ranked scroll feed. The server already decides the order
+ * (continue-watching first, then unwatched episodes in series order, then
+ * unwatched movies, then finished items), so the client only renders it.
+ *
+ * `next_id` is the next episode in the same series (null for movies and for the
+ * last episode) and drives autoplay.
+ */
+export interface FeedItem {
+  id: number
+  title: string | null
+  filename: string
+  series_key: string | null
+  series_title: string | null
+  episode: number | null
+  width: number | null
+  height: number | null
+  duration: number
+  position: number
+  finished: boolean
+  favorite: boolean
+  liked: boolean
+  next_id: number | null
+  created_at: number
+}
+
+export interface FeedPage {
+  items: FeedItem[]
+  total: number
+}
+
 export interface Playback {
   mode: 'direct' | 'ready' | 'preparing' | 'failed'
   url?: string
@@ -174,6 +205,14 @@ export function fetchMedia(params: {
   if (params.includeArchived) search.set('include_archived', 'true')
   const suffix = search.toString()
   return request<MediaPage>(`/api/v1/media${suffix ? `?${suffix}` : ''}`)
+}
+
+/**
+ * Fetch the ranked feed for the vertical scroll view. The server clamps the
+ * limit to 1..200; the default matches the first screenful we preload around.
+ */
+export function fetchFeed(limit = 100): Promise<FeedPage> {
+  return request<FeedPage>(`/api/v1/feed?limit=${limit}`)
 }
 
 export function preparePlayback(id: number): Promise<Playback> {

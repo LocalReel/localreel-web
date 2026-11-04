@@ -27,6 +27,12 @@ const en = {
   'nav.admin': 'Admin →',
   'nav.library.back': '← Library',
 
+  // Mobile bottom navigation
+  'nav.bottom': 'Main navigation',
+  'nav.tab.library': 'Library',
+  'nav.tab.reels': 'Reels',
+  'nav.tab.admin': 'Admin',
+
   // Values shared by more than one page
   'common.unknownCodec': 'unknown',
   'common.missing': 'missing',
@@ -62,6 +68,21 @@ const en = {
   'reels.playing': 'playing',
   'reels.unmute': 'Unmute',
   'reels.mute': 'Mute',
+  'reels.episode': 'Episode {episode}',
+  'reels.seen': 'Resume at {time}',
+  'reels.like': 'Like',
+  'reels.liked': 'Liked',
+  'reels.favorite': 'Favorite',
+  'reels.favorited': 'Favorited',
+  'reels.progress': 'Playback progress',
+  'reels.seriesFinished': 'Series finished',
+  'reels.replay': 'Replay',
+  'reels.retry': 'Retry',
+  'reels.error.title': 'Unable to play this file',
+  'reels.error.body': 'The file may be missing or transcoding failed.',
+  'reels.transcoding': 'Transcoding this file…',
+  'reels.loadingNext': 'Loading the next episode…',
+  'reels.nextFailed': 'Could not load the next episode.',
 
   // Admin: header, health and status values
   'admin.kicker': 'Operations',
@@ -189,6 +210,12 @@ const zh: Record<TranslationKey, string> = {
   'nav.admin': '管理 →',
   'nav.library.back': '← 媒体库',
 
+  // Mobile bottom navigation
+  'nav.bottom': '主导航',
+  'nav.tab.library': '媒体库',
+  'nav.tab.reels': '短视频',
+  'nav.tab.admin': '管理',
+
   // Values shared by more than one page
   'common.unknownCodec': '未知',
   'common.missing': '缺失',
@@ -224,6 +251,21 @@ const zh: Record<TranslationKey, string> = {
   'reels.playing': '播放中',
   'reels.unmute': '取消静音',
   'reels.mute': '静音',
+  'reels.episode': '第 {episode} 集',
+  'reels.seen': '看到 {time}',
+  'reels.like': '喜欢',
+  'reels.liked': '已喜欢',
+  'reels.favorite': '收藏',
+  'reels.favorited': '已收藏',
+  'reels.progress': '播放进度',
+  'reels.seriesFinished': '本系列已看完',
+  'reels.replay': '重播',
+  'reels.retry': '重试',
+  'reels.error.title': '无法播放此文件',
+  'reels.error.body': '文件可能缺失，或转码失败。',
+  'reels.transcoding': '正在转码此文件…',
+  'reels.loadingNext': '正在加载下一集…',
+  'reels.nextFailed': '无法加载下一集。',
 
   // Admin: header, health and status values
   'admin.kicker': '运维',

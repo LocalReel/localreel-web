@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test src/resume.test.ts src/i18n.test.ts",
+    "test": "node --experimental-strip-types --test src/resume.test.ts src/i18n.test.ts src/feed.test.ts",
     "test:resume": "node scripts/browser-resume-test.mjs",
     "test:browser": "node scripts/browser-resume-mock.mjs"
   },

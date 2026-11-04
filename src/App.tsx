@@ -25,9 +25,93 @@ const filters: Array<{ id: MediaFilter; labelKey: TranslationKey }> = [
 ]
 
 export default function App() {
-  if (window.location.pathname.startsWith('/watch')) return <Reels />
-  if (window.location.pathname.startsWith('/admin')) return <Admin />
-  return <Library />
+  const path = window.location.pathname
+  // Reels is a full-screen surface with its own overlay controls, so it
+  // deliberately renders without the app chrome and bottom navigation.
+  if (path.startsWith('/watch')) return <Reels />
+  if (path.startsWith('/admin')) {
+    return (
+      <>
+        <Admin />
+        <MobileNav current="admin" />
+      </>
+    )
+  }
+  return (
+    <>
+      <Library />
+      <MobileNav current="library" />
+    </>
+  )
+}
+
+type MobileTab = 'library' | 'reels' | 'admin'
+
+const mobileTabs: Array<{ id: MobileTab; href: string; labelKey: TranslationKey }> = [
+  { id: 'library', href: '/', labelKey: 'nav.tab.library' },
+  { id: 'reels', href: '/watch', labelKey: 'nav.tab.reels' },
+  { id: 'admin', href: '/admin', labelKey: 'nav.tab.admin' },
+]
+
+/**
+ * Bottom tab bar for phones (media library / reels / admin). CSS hides it on
+ * wide screens, so the desktop layout with the topbar navigation is untouched.
+ */
+function MobileNav({ current }: { current: Exclude<MobileTab, 'reels'> }) {
+  const { t } = useLang()
+  return (
+    <nav className="mobile-nav" aria-label={t('nav.bottom')}>
+      {mobileTabs.map(tab => (
+        <a
+          key={tab.id}
+          href={tab.href}
+          className={tab.id === current ? 'mobile-tab active' : 'mobile-tab'}
+          aria-current={tab.id === current ? 'page' : undefined}
+        >
+          <span className="mobile-tab-icon" aria-hidden="true">
+            {tab.id === 'library' ? (
+              <LibraryIcon />
+            ) : tab.id === 'reels' ? (
+              <ReelsIcon />
+            ) : (
+              <AdminIcon />
+            )}
+          </span>
+          <span>{t(tab.labelKey)}</span>
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+function LibraryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  )
+}
+
+function ReelsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M10 8.5v7l6-3.5Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function AdminIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <circle cx="16" cy="7" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="8" cy="17" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  )
 }
 
 function Library() {
