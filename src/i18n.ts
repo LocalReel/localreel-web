@@ -60,6 +60,9 @@ const en = {
   'player.preparing': 'Preparing playback…',
   'player.transcoding': 'transcoding',
   'player.unable': 'Unable to play this file.',
+  'player.hls': 'HLS',
+  'player.hlsHint': 'Play through an HLS playlist',
+  'player.hlsUnsupported': 'This browser cannot play HLS.',
 
   // Reels
   'reels.loading': 'Loading reels…',
@@ -244,6 +247,9 @@ const zh: Record<TranslationKey, string> = {
   'player.preparing': '正在准备播放…',
   'player.transcoding': '转码中',
   'player.unable': '无法播放此文件。',
+  'player.hls': 'HLS',
+  'player.hlsHint': '通过 HLS 播放列表播放',
+  'player.hlsUnsupported': '此浏览器无法播放 HLS。',
 
   // Reels
   'reels.loading': '正在加载短视频…',

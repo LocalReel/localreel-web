@@ -217,8 +217,9 @@ export function fetchFeed(limit = 100): Promise<FeedPage> {
   return request<FeedPage>(`/api/v1/feed?limit=${limit}`)
 }
 
-export function preparePlayback(id: number): Promise<Playback> {
-  return request<Playback>(`/api/v1/media/${id}/playback`, { method: 'POST' })
+export function preparePlayback(id: number, format?: 'hls'): Promise<Playback> {
+  const query = format ? `?format=${format}` : ''
+  return request<Playback>(`/api/v1/media/${id}/playback${query}`, { method: 'POST' })
 }
 
 export function thumbnailUrl(media: Media): string | null {

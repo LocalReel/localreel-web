@@ -292,6 +292,7 @@ function Player({
   const [error, setError] = useState<string | null>(null)
   const [playFailed, setPlayFailed] = useState(false)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
+  const [hlsMode, setHlsMode] = useState(false)
   const cancelled = useRef(false)
   const video = useRef<HTMLVideoElement | null>(null)
   const lastSave = useRef(0)
@@ -304,7 +305,7 @@ function Player({
 
     const resolve = async () => {
       try {
-        const next = await preparePlayback(media.id)
+        const next = await preparePlayback(media.id, hlsMode ? 'hls' : undefined)
         if (cancelled.current) return
         setPlayback(next)
         if (next.mode === 'preparing') {
@@ -322,7 +323,7 @@ function Player({
       cancelled.current = true
       if (timer) window.clearTimeout(timer)
     }
-  }, [media.id])
+  }, [media.id, hlsMode])
 
   useEffect(() => {
     let stopped = false
@@ -393,7 +394,45 @@ function Player({
 
   const direct = playback?.mode === 'direct' || playback?.mode === 'ready'
   const source = direct ? playback?.url : undefined
+  const hlsSource = source && /\.m3u8($|\?)/i.test(source) ? source : undefined
   const poster = useMemo(() => thumbnailUrl(media) ?? undefined, [media])
+
+  useEffect(() => {
+    if (!hlsSource) return
+    const element = video.current
+    if (!element) return
+    if (element.canPlayType('application/vnd.apple.mpegurl')) {
+      element.src = hlsSource
+      return
+    }
+    let disposed = false
+    let instance: import('hls.js').default | null = null
+    void import('hls.js').then(module => {
+      if (disposed) return
+      const Hls = module.default
+      if (!Hls.isSupported()) {
+        setError(t('player.hlsUnsupported'))
+        return
+      }
+      instance = new Hls({ enableWorker: true })
+      instance.loadSource(hlsSource)
+      instance.attachMedia(element)
+    })
+    return () => {
+      disposed = true
+      instance?.destroy()
+    }
+    // `t` is stable for the language; the source is what changes playback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hlsSource])
+
+  const switchToHls = () => {
+    if (hlsMode) return
+    setPlayFailed(false)
+    setError(null)
+    setPlayback(null)
+    setHlsMode(true)
+  }
 
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-label={displayTitle(media)}>
@@ -406,11 +445,20 @@ function Player({
         >
           ×
         </button>
+        <button
+          type="button"
+          className={hlsMode ? 'mode active' : 'mode'}
+          onClick={switchToHls}
+          disabled={hlsMode}
+          title={t('player.hlsHint')}
+        >
+          {t('player.hls')}
+        </button>
         {source ? (
           <video
             key={source}
             ref={video}
-            src={source}
+            src={hlsSource ? undefined : source}
             poster={poster}
             controls
             autoPlay
