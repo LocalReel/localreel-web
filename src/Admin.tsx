@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import LangSwitch from './LangSwitch'
+import { useAuth } from './auth'
 import {
+  addSource,
+  createUser,
   deleteSource,
+  deleteUser,
   fetchAdminHealth,
   fetchCacheStats,
   fetchJobs,
   fetchScanRuns,
   fetchSources,
+  fetchUsers,
   importBackup,
   remapSource,
   restoreBackup,
@@ -14,14 +19,17 @@ import {
   setSourceArchived,
   setSourceEnabled,
   triggerScan,
+  updateUser,
   type AdminHealth,
   type BackupImportReport,
   type CacheGcReport,
   type CacheStats,
   type JobRecord,
   type RemapReport,
+  type Role,
   type ScanRun,
   type Source,
+  type User,
 } from './api'
 import { useLang, type Translate, type TranslationKey } from './i18n'
 
@@ -71,6 +79,7 @@ function formatBytes(bytes: number): string {
 
 export default function Admin() {
   const { lang, setLang, t } = useLang()
+  const { user, logout } = useAuth()
   const [health, setHealth] = useState<AdminHealth | null>(null)
   const [sources, setSources] = useState<Source[]>([])
   const [jobs, setJobs] = useState<JobRecord[]>([])
@@ -92,6 +101,16 @@ export default function Admin() {
   const [error, setError] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
   const [toggling, setToggling] = useState<number | null>(null)
+
+  // Adding a library folder.
+  const [newSource, setNewSource] = useState('')
+  const [newKind, setNewKind] = useState('')
+  const [adding, setAdding] = useState(false)
+
+  // Account administration (administrators only).
+  const [users, setUsers] = useState<User[]>([])
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' as Role })
+  const [userBusy, setUserBusy] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -121,6 +140,126 @@ export default function Admin() {
     const timer = window.setInterval(() => void load(), 4000)
     return () => window.clearInterval(timer)
   }, [load])
+
+  const isAdmin = user.role === 'admin'
+
+  const loadUsers = useCallback(async () => {
+    if (user.role !== 'admin') return
+    try {
+      setUsers(await fetchUsers())
+    } catch {
+      // The diagnostics panel already reports connectivity problems.
+    }
+  }, [user.role])
+
+  useEffect(() => {
+    void loadUsers()
+  }, [loadUsers])
+
+  const addFolder = async (event: FormEvent) => {
+    event.preventDefault()
+    const uri = newSource.trim()
+    if (!uri) return
+    setAdding(true)
+    setError(null)
+    setActionMessage(null)
+    try {
+      const source = await addSource(uri, newKind.trim() || undefined)
+      setNewSource('')
+      await triggerScan(source.id).catch(() => undefined)
+      setActionMessage(t('admin.addSource.done', { uri: source.uri }))
+      await load()
+    } catch (cause) {
+      setError(
+        t('admin.addSource.error', {
+          message: cause instanceof Error ? cause.message : String(cause),
+        }),
+      )
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const addAccount = async (event: FormEvent) => {
+    event.preventDefault()
+    const username = newUser.username.trim()
+    if (!username || !newUser.password) return
+    setUserBusy(true)
+    setError(null)
+    setActionMessage(null)
+    try {
+      const created = await createUser(username, newUser.password, newUser.role)
+      setNewUser({ username: '', password: '', role: 'user' })
+      setActionMessage(t('admin.users.created', { username: created.username }))
+      await loadUsers()
+    } catch (cause) {
+      setError(
+        t('admin.users.failed', {
+          message: cause instanceof Error ? cause.message : String(cause),
+        }),
+      )
+    } finally {
+      setUserBusy(false)
+    }
+  }
+
+  const toggleAccount = async (account: User) => {
+    setUserBusy(true)
+    setError(null)
+    try {
+      await updateUser(account.id, { enabled: !account.enabled })
+      await loadUsers()
+    } catch (cause) {
+      setError(
+        t('admin.users.failed', {
+          message: cause instanceof Error ? cause.message : String(cause),
+        }),
+      )
+    } finally {
+      setUserBusy(false)
+    }
+  }
+
+  const resetPassword = async (account: User) => {
+    const next = window.prompt(
+      t('admin.users.resetPrompt', { username: account.username }),
+    )
+    if (!next) return
+    setUserBusy(true)
+    setError(null)
+    try {
+      await updateUser(account.id, { password: next })
+      setActionMessage(t('admin.users.created', { username: account.username }))
+    } catch (cause) {
+      setError(
+        t('admin.users.failed', {
+          message: cause instanceof Error ? cause.message : String(cause),
+        }),
+      )
+    } finally {
+      setUserBusy(false)
+    }
+  }
+
+  const removeAccount = async (account: User) => {
+    if (!window.confirm(t('admin.users.deleteConfirm', { username: account.username }))) {
+      return
+    }
+    setUserBusy(true)
+    setError(null)
+    try {
+      await deleteUser(account.id)
+      await loadUsers()
+    } catch (cause) {
+      setError(
+        t('admin.users.failed', {
+          message: cause instanceof Error ? cause.message : String(cause),
+        }),
+      )
+    } finally {
+      setUserBusy(false)
+    }
+  }
 
   const remove = async (source: Source) => {
     setError(null)
@@ -309,6 +448,12 @@ export default function Admin() {
           <h1>{t('admin.title')}</h1>
         </div>
         <div className="topbar-right">
+          <span className="signed-in">
+            {t('admin.signedInAs', { username: user.username })}
+          </span>
+          <button type="button" className="ghost" onClick={() => void logout()}>
+            {t('admin.action.signOut')}
+          </button>
           <LangSwitch lang={lang} onChange={setLang} t={t} />
           <a className="nav-link" href="/">
             {t('nav.library.back')}
@@ -346,6 +491,155 @@ export default function Admin() {
             <span className="stat-label">{t('admin.stat.media')}</span>
             <strong>{health.media_count}</strong>
           </article>
+        </section>
+      )}
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>{t('admin.addSource.title')}</h2>
+        </div>
+        <form className="add-source" onSubmit={event => void addFolder(event)}>
+          <input
+            className="grow"
+            aria-label={t('admin.addSource.title')}
+            placeholder={t('admin.addSource.placeholder')}
+            value={newSource}
+            onChange={event => setNewSource(event.target.value)}
+          />
+          <input
+            className="kind"
+            aria-label={t('admin.addSource.kind')}
+            placeholder={t('admin.addSource.kindHint')}
+            value={newKind}
+            onChange={event => setNewKind(event.target.value)}
+          />
+          <button
+            type="submit"
+            className="primary"
+            disabled={adding || !newSource.trim()}
+          >
+            {adding ? t('admin.addSource.working') : t('admin.addSource.submit')}
+          </button>
+        </form>
+        <p className="hint">{t('admin.addSource.hint')}</p>
+      </section>
+
+      {isAdmin && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>{t('admin.users.title')}</h2>
+          </div>
+          <p className="muted">{t('admin.users.subtitle')}</p>
+
+          <form className="add-user" onSubmit={event => void addAccount(event)}>
+            <input
+              aria-label={t('admin.users.username')}
+              placeholder={t('admin.users.username')}
+              value={newUser.username}
+              onChange={event =>
+                setNewUser(previous => ({ ...previous, username: event.target.value }))
+              }
+            />
+            <input
+              type="password"
+              aria-label={t('admin.users.password')}
+              placeholder={t('admin.users.password')}
+              value={newUser.password}
+              onChange={event =>
+                setNewUser(previous => ({ ...previous, password: event.target.value }))
+              }
+            />
+            <select
+              aria-label={t('admin.users.role')}
+              value={newUser.role}
+              onChange={event =>
+                setNewUser(previous => ({
+                  ...previous,
+                  role: event.target.value as Role,
+                }))
+              }
+            >
+              <option value="user">{t('admin.users.roleUser')}</option>
+              <option value="admin">{t('admin.users.roleAdmin')}</option>
+            </select>
+            <button
+              type="submit"
+              className="primary"
+              disabled={
+                userBusy || !newUser.username.trim() || !newUser.password.trim()
+              }
+            >
+              {userBusy ? t('admin.users.creating') : t('admin.users.create')}
+            </button>
+          </form>
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>{t('admin.users.username')}</th>
+                  <th>{t('admin.users.role')}</th>
+                  <th>{t('admin.users.lastLogin')}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(account => (
+                  <tr key={account.id}>
+                    <td className="mono">
+                      {account.username}
+                      {account.id === user.id ? ` (${t('admin.users.self')})` : ''}
+                    </td>
+                    <td>
+                      {account.role === 'admin'
+                        ? t('admin.users.roleAdmin')
+                        : t('admin.users.roleUser')}
+                      {account.enabled ? '' : ` · ${t('admin.value.no')}`}
+                    </td>
+                    <td>
+                      {account.last_login_at
+                        ? new Date(account.last_login_at * 1000).toLocaleString(
+                            lang === 'zh' ? 'zh-CN' : 'en',
+                          )
+                        : t('admin.users.never')}
+                    </td>
+                    <td className="right">
+                      {account.id !== user.id && (
+                        <>
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={userBusy}
+                            onClick={() => void toggleAccount(account)}
+                          >
+                            {account.enabled
+                              ? t('admin.users.disable')
+                              : t('admin.users.enable')}
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={userBusy}
+                            onClick={() => void resetPassword(account)}
+                          >
+                            {t('admin.users.reset')}
+                          </button>{' '}
+                          <button
+                            type="button"
+                            className="ghost"
+                            disabled={userBusy || account.id === 1}
+                            onClick={() => void removeAccount(account)}
+                          >
+                            {t('admin.users.delete')}
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

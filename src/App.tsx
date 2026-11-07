@@ -226,7 +226,9 @@ function Library() {
       {empty && (
         <div className="notice">
           {t('library.empty.prefix')}
-          <code>POST /api/v1/sources</code>
+          <a className="nav-link" href="/admin">
+            {t('admin.sources.title')}
+          </a>
           {t('library.empty.suffix')}
         </div>
       )}

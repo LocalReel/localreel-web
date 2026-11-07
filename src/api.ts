@@ -175,19 +175,182 @@ interface ApiErrorBody {
   error?: { code?: string; message?: string }
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init)
+/** An HTTP error that keeps the status code, so the UI can react to 401/403. */
+export class ApiError extends Error {
+  status: number
+  code: string
+
+  constructor(status: number, code: string, message: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
+/**
+ * CSRF token for the current session.
+ *
+ * The server sets it in a readable cookie after sign-in and requires it back in
+ * an `x-localreel-csrf` header on every state-changing request, so a page from
+ * another origin cannot drive the API with the session cookie.
+ */
+let csrfToken: string | null = null
+
+export function setCsrfToken(token: string | null): void {
+  csrfToken = token
+}
+
+export function currentCsrfToken(): string | null {
+  return csrfToken
+}
+
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+/** Called when any request comes back 401, so the UI can return to sign-in. */
+let unauthorizedHandler: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler
+}
+
+async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const method = (init.method ?? 'GET').toUpperCase()
+  const headers = new Headers(init.headers)
+  if (csrfToken && MUTATING_METHODS.has(method)) {
+    headers.set('x-localreel-csrf', csrfToken)
+  }
+
+  const response = await fetch(url, {
+    credentials: 'same-origin',
+    ...init,
+    method,
+    headers,
+  })
+
+  if (response.status === 401) {
+    unauthorizedHandler?.()
+  }
+
   if (!response.ok) {
     let message = `HTTP ${response.status}`
+    let code = 'http_error'
     try {
       const body = (await response.json()) as ApiErrorBody
       if (body.error?.message) message = body.error.message
+      if (body.error?.code) code = body.error.code
     } catch {
       // keep the status-based message
     }
-    throw new Error(message)
+    throw new ApiError(response.status, code, message)
+  }
+  if (response.status === 204) {
+    return undefined as T
   }
   return response.json() as Promise<T>
+}
+
+// --- Accounts ---------------------------------------------------------------
+
+export type Role = 'admin' | 'user'
+
+export interface User {
+  id: number
+  username: string
+  role: Role
+  enabled: boolean
+  created_at: number
+  updated_at: number
+  last_login_at: number | null
+}
+
+export interface AuthStatus {
+  setup_required: boolean
+  authenticated: boolean
+  user: User | null
+  mode: string
+}
+
+interface SessionResponse {
+  user: User
+  csrf: string
+}
+
+export function fetchAuthStatus(): Promise<AuthStatus> {
+  return request<AuthStatus>('/api/v1/auth/status')
+}
+
+async function startSession(
+  url: string,
+  username: string,
+  password: string,
+): Promise<User> {
+  const session = await request<SessionResponse>(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  setCsrfToken(session.csrf)
+  return session.user
+}
+
+export function login(username: string, password: string): Promise<User> {
+  return startSession('/api/v1/auth/login', username, password)
+}
+
+export function setupOwner(username: string, password: string): Promise<User> {
+  return startSession('/api/v1/auth/setup', username, password)
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await request<void>('/api/v1/auth/logout', { method: 'POST' })
+  } finally {
+    setCsrfToken(null)
+  }
+}
+
+export function fetchMe(): Promise<User> {
+  return request<User>('/api/v1/auth/me')
+}
+
+export function fetchUsers(): Promise<User[]> {
+  return request<User[]>('/api/v1/users')
+}
+
+export function createUser(
+  username: string,
+  password: string,
+  role: Role,
+): Promise<User> {
+  return request<User>('/api/v1/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, role }),
+  })
+}
+
+export function updateUser(
+  id: number,
+  patch: { role?: Role; enabled?: boolean; password?: string },
+): Promise<User> {
+  return request<User>(`/api/v1/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  })
+}
+
+export function deleteUser(id: number): Promise<void> {
+  return request<void>(`/api/v1/users/${id}`, { method: 'DELETE' })
+}
+
+export function addSource(uri: string, kind?: string): Promise<Source> {
+  return request<Source>('/api/v1/sources', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(kind ? { uri, kind } : { uri }),
+  })
 }
 
 export function fetchMedia(params: {

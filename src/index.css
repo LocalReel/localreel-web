@@ -1192,3 +1192,102 @@ body.reels-open {
     justify-content: space-between;
   }
 }
+
+/* Accounts: first run, sign-in and the session menu --------------------- */
+
+.auth-shell {
+  max-width: 34rem;
+}
+
+.auth-panel {
+  margin-top: 2rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.auth-form h2 {
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field input,
+.add-source input,
+.add-user input,
+.add-user select {
+  min-height: 2.4rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.field input:focus,
+.add-source input:focus,
+.add-user input:focus,
+.add-user select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.primary {
+  min-height: 2.4rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fdfbf6;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.primary:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.hint {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.signed-in {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.add-source,
+.add-user {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.add-source .grow {
+  flex: 1 1 18rem;
+}
+
+.add-source .kind {
+  flex: 0 1 8rem;
+}
+
+.add-user input {
+  flex: 1 1 10rem;
+}
