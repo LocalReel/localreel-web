@@ -43,7 +43,7 @@ const chromeArgs = [
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-async function waitForJson(url, timeoutMs = 15000) {
+async function waitForJson(url, timeoutMs = 30000) {
   const deadline = Date.now() + timeoutMs
   let lastError
   while (Date.now() < deadline) {
@@ -63,10 +63,20 @@ if (!mediaPage.items?.length) {
   throw new Error('mock server returned no media')
 }
 
-const chrome = spawn(chromePath, chromeArgs, { stdio: 'ignore' })
+const chrome = spawn(chromePath, chromeArgs, { stdio: ['ignore', 'ignore', 'pipe'] })
+// Keep a short tail of Chrome's stderr: a launch failure is otherwise just a
+// timeout with no explanation.
+let chromeStderr = ''
+chrome.stderr?.on('data', chunk => {
+  chromeStderr = (chromeStderr + chunk).slice(-2000)
+})
 let socket
 try {
-  await waitForJson(`http://127.0.0.1:${debugPort}/json/version`)
+  try {
+    await waitForJson(`http://127.0.0.1:${debugPort}/json/version`)
+  } catch (error) {
+    throw new Error(`${error.message}\nchrome exited=${chrome.exitCode} stderr:\n${chromeStderr}`)
+  }
   const targets = await waitForJson(`http://127.0.0.1:${debugPort}/json/list`)
   const target = targets.find(item => item.type === 'page')
   if (!target?.webSocketDebuggerUrl) {
