@@ -253,6 +253,8 @@ const en = {
   'admin.users.never': 'never',
   'admin.users.created': 'Created the account {username}.',
   'admin.users.failed': 'Could not change the account: {message}',
+  'admin.backup.usersCreated':
+    '{count} restored account(s) have no password yet; set one in Accounts.',
 } as const
 
 export type TranslationKey = keyof typeof en
@@ -491,6 +493,8 @@ const zh: Record<TranslationKey, string> = {
   'admin.users.never': '从未',
   'admin.users.created': '已创建账户 {username}。',
   'admin.users.failed': '账户操作失败：{message}',
+  'admin.backup.usersCreated':
+    '恢复了 {count} 个账户，它们还没有密码，请在「账户」里设置。',
 }
 
 export const dictionaries: Record<Lang, Record<TranslationKey, string>> = { en, zh }

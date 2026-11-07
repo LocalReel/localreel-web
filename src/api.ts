@@ -126,6 +126,8 @@ export interface BackupImportReport {
   dry_run: boolean
   sources: number
   sources_added: number
+  users: number
+  users_created: number
   states: number
   imported: number
   unchanged: number

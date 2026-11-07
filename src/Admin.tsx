@@ -891,17 +891,24 @@ export default function Admin() {
           </button>
         </div>
         {backupReport && (
-          <p className="muted">
-            {t('admin.backup.report', {
-              sources: backupReport.sources_added,
-              imported: backupReport.imported,
-              unchanged: backupReport.unchanged,
-              missing: backupReport.missing,
-            })}
-            {backupReport.warnings.length > 0
-              ? ` · ${t('admin.backup.warnings', { count: backupReport.warnings.length })}`
-              : ''}
-          </p>
+          <>
+            <p className="muted">
+              {t('admin.backup.report', {
+                sources: backupReport.sources_added,
+                imported: backupReport.imported,
+                unchanged: backupReport.unchanged,
+                missing: backupReport.missing,
+              })}
+              {backupReport.warnings.length > 0
+                ? ` · ${t('admin.backup.warnings', { count: backupReport.warnings.length })}`
+                : ''}
+            </p>
+            {backupReport.users_created > 0 && (
+              <p className="notice">
+                {t('admin.backup.usersCreated', { count: backupReport.users_created })}
+              </p>
+            )}
+          </>
         )}
       </section>
 
