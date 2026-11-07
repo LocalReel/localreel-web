@@ -8,6 +8,7 @@ import {
   describeError,
   displayTitle,
   fetchMedia,
+  fetchPreview,
   fetchState,
   fetchTracks,
   formatDuration,
@@ -20,6 +21,7 @@ import {
   type Playback,
   type Track,
 } from './api'
+import { cueAt, cueStyle, ratioOf, type PreviewSprite } from './preview'
 import { useLang, type Translate, type TranslationKey } from './i18n'
 import { resumeTarget } from './resume'
 
@@ -310,6 +312,9 @@ function Player({
   const [playFailed, setPlayFailed] = useState(false)
   const [tracks, setTracks] = useState<Track[]>([])
   const [audioTrack, setAudioTrack] = useState<number | null>(null)
+  const [preview, setPreview] = useState<PreviewSprite | null>(null)
+  const [hoverRatio, setHoverRatio] = useState<number | null>(null)
+  const [played, setPlayed] = useState(0)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const [hlsMode, setHlsMode] = useState(false)
   const cancelled = useRef(false)
@@ -358,6 +363,14 @@ function Player({
       })
       .catch(() => {
         if (!stopped) setTracks([])
+      })
+    // Long videos get a sprite sheet; short ones answer 404 and show no bar.
+    fetchPreview(media.id)
+      .then(sprite => {
+        if (!stopped) setPreview(sprite)
+      })
+      .catch(() => {
+        if (!stopped) setPreview(null)
       })
     return () => {
       stopped = true
@@ -515,9 +528,13 @@ function Player({
               saveProgress(event.currentTarget.currentTime, event.currentTarget.duration)
             }
             onTimeUpdate={event => {
+              const element = event.currentTarget
+              if (element.duration > 0) {
+                setPlayed(element.currentTime / element.duration)
+              }
               if (Date.now() - lastSave.current < 5000) return
               lastSave.current = Date.now()
-              saveProgress(event.currentTarget.currentTime, event.currentTarget.duration)
+              saveProgress(element.currentTime, element.duration)
             }}
             onError={() => setPlayFailed(true)}
           />
@@ -526,6 +543,42 @@ function Player({
             {playFailed
               ? t('player.unable')
               : (error ?? playback?.message ?? t('player.preparing'))}
+          </div>
+        )}
+        {preview && source && (
+          <div
+            className="preview-rail"
+            role="presentation"
+            onPointerMove={event => {
+              const rect = event.currentTarget.getBoundingClientRect()
+              setHoverRatio(ratioOf(event.clientX, rect.left, rect.width))
+            }}
+            onPointerLeave={() => setHoverRatio(null)}
+            onClick={event => {
+              const element = video.current
+              if (!element || !Number.isFinite(element.duration) || element.duration <= 0) {
+                return
+              }
+              const rect = event.currentTarget.getBoundingClientRect()
+              element.currentTime =
+                ratioOf(event.clientX, rect.left, rect.width) * element.duration
+            }}
+          >
+            <div className="preview-rail-fill" style={{ width: `${played * 100}%` }} />
+            {(() => {
+              if (hoverRatio == null) return null
+              const cue = cueAt(preview, hoverRatio * (media.duration ?? 0))
+              if (!cue) return null
+              return (
+                <div
+                  className="preview-rail-pop"
+                  style={{ left: `${hoverRatio * 100}%` }}
+                  aria-hidden="true"
+                >
+                  <div className="preview-rail-image" style={cueStyle(preview, cue)} />
+                </div>
+              )
+            })()}
           </div>
         )}
         <div className="player-meta">

@@ -1,3 +1,5 @@
+import { parsePreviewVtt, type PreviewSprite } from './preview'
+
 export interface Media {
   id: number
   uid: string
@@ -477,6 +479,19 @@ export function preparePlayback(
 
 export function fetchTracks(id: number): Promise<Track[]> {
   return request<Track[]>(`/api/v1/media/${id}/tracks`)
+}
+
+/**
+ * Progress-bar preview cues, or `null` when the file has none.
+ *
+ * Short videos are never given a sprite, so a 404 here is normal.
+ */
+export async function fetchPreview(id: number): Promise<PreviewSprite | null> {
+  const response = await fetch(`/api/v1/media/${id}/preview.vtt`, {
+    credentials: 'same-origin',
+  })
+  if (!response.ok) return null
+  return parsePreviewVtt(await response.text())
 }
 
 export function thumbnailUrl(media: Media): string | null {

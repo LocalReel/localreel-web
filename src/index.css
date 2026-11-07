@@ -1425,3 +1425,51 @@ body.reels-open {
   border-color: transparent;
   color: #fff;
 }
+
+/* Progress-bar previews (sprite sheet rectangles from preview.vtt). */
+.reel-preview {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.reel-preview-image {
+  border-radius: 0.45rem;
+  background-repeat: no-repeat;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.preview-rail {
+  position: relative;
+  height: 6px;
+  margin: 0.9rem 0 0.2rem;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+}
+
+.preview-rail-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+.preview-rail-pop {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.preview-rail-image {
+  border-radius: 0.45rem;
+  background-repeat: no-repeat;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}

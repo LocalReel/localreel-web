@@ -12,6 +12,7 @@ import TrackMenu from './TrackMenu'
 import {
   describeError,
   fetchFeed,
+  fetchPreview,
   fetchTracks,
   preparePlayback,
   saveState,
@@ -20,6 +21,7 @@ import {
   type Playback,
   type Track,
 } from './api'
+import { cueAt, cueStyle, ratioOf, type PreviewSprite } from './preview'
 import {
   feedDisplayTitle,
   feedItemFromMedia,
@@ -445,6 +447,8 @@ function ReelSlide({
   const video = useRef<HTMLVideoElement | null>(null)
   const [tracks, setTracks] = useState<Track[]>([])
   const [audioTrack, setAudioTrack] = useState<number | null>(null)
+  const [preview, setPreview] = useState<PreviewSprite | null>(null)
+  const [hoverRatio, setHoverRatio] = useState<number | null>(null)
   const [liked, setLiked] = useState(item.liked)
   const [favorite, setFavorite] = useState(item.favorite)
   const [currentTime, setCurrentTime] = useState(0)
@@ -465,6 +469,14 @@ function ReelSlide({
       })
       .catch(() => {
         if (!stopped) setTracks([])
+      })
+    // Long videos get a sprite sheet for the scrub bar; short ones 404.
+    fetchPreview(item.id)
+      .then(sprite => {
+        if (!stopped) setPreview(sprite)
+      })
+      .catch(() => {
+        if (!stopped) setPreview(null)
       })
     return () => {
       stopped = true
@@ -1139,9 +1151,30 @@ function ReelSlide({
           aria-valuemax={100}
           aria-valuenow={Math.round(ratio * 100)}
           tabIndex={-1}
+          onPointerMove={event => {
+            const rect = event.currentTarget.getBoundingClientRect()
+            setHoverRatio(ratioOf(event.clientX, rect.left, rect.width))
+          }}
+          onPointerLeave={() => setHoverRatio(null)}
         >
           <div className="reel-progress-fill" style={{ width: `${ratio * 100}%` }} />
           <div className="reel-progress-thumb" style={{ left: `${ratio * 100}%` }} />
+          {preview &&
+            (() => {
+              const pointer = scrubRatio ?? hoverRatio
+              if (pointer == null) return null
+              const cue = cueAt(preview, pointer * duration)
+              if (!cue) return null
+              return (
+                <div
+                  className="reel-preview"
+                  style={{ left: `${pointer * 100}%` }}
+                  aria-hidden="true"
+                >
+                  <div className="reel-preview-image" style={cueStyle(preview, cue)} />
+                </div>
+              )
+            })()}
         </div>
       </div>
     </section>
