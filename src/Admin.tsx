@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import LangSwitch from './LangSwitch'
 import { useAuth } from './auth'
 import {
@@ -18,6 +18,7 @@ import {
   runCacheGc,
   setSourceArchived,
   setSourceEnabled,
+  shutdownServer,
   triggerScan,
   updateUser,
   type AdminHealth,
@@ -112,7 +113,16 @@ export default function Admin() {
   const [newUser, setNewUser] = useState({ username: '', password: '', role: 'user' as Role })
   const [userBusy, setUserBusy] = useState(false)
 
+  // Stopping the process from the page (platforms without a tray).
+  const [shuttingDown, setShuttingDown] = useState(false)
+  const [shutdownDone, setShutdownDone] = useState(false)
+
+  const shutdownRef = useRef(false)
+
   const load = useCallback(async () => {
+    // Once the process is stopping, its API is gone: stop polling so the page
+    // shows the shutdown notice instead of a connection error.
+    if (shutdownRef.current) return
     setError(null)
     try {
       const [nextHealth, nextSources, nextJobs, nextRuns, nextCache] =
@@ -440,6 +450,20 @@ export default function Admin() {
     }
   }
 
+  const powerOff = async () => {
+    if (!window.confirm(t('admin.shutdown.confirm'))) return
+    setShuttingDown(true)
+    setError(null)
+    try {
+      await shutdownServer()
+      shutdownRef.current = true
+      setShutdownDone(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setShuttingDown(false)
+    }
+  }
   return (
     <main className="shell admin">
       <header className="topbar">
@@ -1007,6 +1031,27 @@ export default function Admin() {
             <dt>{t('admin.paths.version')}</dt>
             <dd className="mono">{health.version}</dd>
           </dl>
+        </section>
+      )}
+
+      {health && isAdmin && (
+        <section className="panel">
+          <h2>{t('admin.shutdown.title')}</h2>
+          <p className="muted">{t('admin.shutdown.help')}</p>
+          {shutdownDone ? (
+            <p className="notice">{t('admin.shutdown.done')}</p>
+          ) : (
+            <button
+              type="button"
+              className="ghost danger"
+              disabled={shuttingDown}
+              onClick={() => void powerOff()}
+            >
+              {shuttingDown
+                ? t('admin.shutdown.busy')
+                : t('admin.shutdown.action')}
+            </button>
+          )}
         </section>
       )}
     </main>

@@ -460,6 +460,15 @@ export function runCacheGc(): Promise<CacheGcReport> {
   })
 }
 
+/** Ask the process to stop; the response is sent before it does. */
+export function shutdownServer(): Promise<{ status: string }> {
+  return request<{ status: string }>('/api/v1/admin/shutdown', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  })
+}
+
 export function deleteSource(
   sourceId: number,
   options: { deleteMedia?: boolean; dryRun?: boolean } = {},

@@ -421,6 +421,18 @@ a.ghost {
   text-decoration: none;
 }
 
+/* Destructive actions: shutdown, account removal. */
+.ghost.danger {
+  border-color: #c2543f;
+  color: #c2543f;
+}
+
+.ghost.danger:hover:not(:disabled) {
+  background: #c2543f;
+  border-color: #c2543f;
+  color: #fff8ee;
+}
+
 .remap-form {
   margin-top: 1rem;
   padding-top: 1rem;

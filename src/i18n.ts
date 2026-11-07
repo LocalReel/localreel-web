@@ -253,6 +253,14 @@ const en = {
   'admin.users.never': 'never',
   'admin.users.created': 'Created the account {username}.',
   'admin.users.failed': 'Could not change the account: {message}',
+  'admin.shutdown.title': 'Server',
+  'admin.shutdown.help':
+    'Stop the running LocalReel process. On a platform without a tray icon this is how the app exits; playing videos and running jobs are interrupted.',
+  'admin.shutdown.action': 'Shut down server',
+  'admin.shutdown.busy': 'Stopping…',
+  'admin.shutdown.confirm':
+    'Shut down LocalReel? Playback and running jobs stop immediately.',
+  'admin.shutdown.done': 'The server has stopped. You can close this page.',
   'admin.ffmpeg.hint':
     'ffmpeg was not found: metadata, thumbnails and transcoding are disabled. Install ffmpeg, place it in ffmpeg/bin next to the program, or set LOCALREEL_FFMPEG.',
   'admin.backup.usersCreated':
@@ -495,6 +503,13 @@ const zh: Record<TranslationKey, string> = {
   'admin.users.never': '从未',
   'admin.users.created': '已创建账户 {username}。',
   'admin.users.failed': '账户操作失败：{message}',
+  'admin.shutdown.title': '服务器',
+  'admin.shutdown.help':
+    '关闭正在运行的 LocalReel 进程。没有托盘图标的平台用这里退出；播放与进行中的任务会中断。',
+  'admin.shutdown.action': '关闭服务器',
+  'admin.shutdown.busy': '正在停止…',
+  'admin.shutdown.confirm': '确定关闭 LocalReel 吗？播放与进行中的任务会立刻停止。',
+  'admin.shutdown.done': '服务器已停止，可以关闭这个页面了。',
   'admin.ffmpeg.hint':
     '没有找到 ffmpeg：元数据、缩略图与转码不可用。请安装 ffmpeg、放到程序旁边的 ffmpeg/bin，或设置 LOCALREEL_FFMPEG。',
   'admin.backup.usersCreated':
