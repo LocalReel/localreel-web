@@ -1503,3 +1503,12 @@ body.reels-open {
   font-size: 0.75rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
+
+/* Metadata description under the player. */
+.player-overview {
+  margin: 0.4rem 0 0;
+  max-width: 60ch;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+}

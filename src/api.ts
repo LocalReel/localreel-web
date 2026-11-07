@@ -518,6 +518,54 @@ export function saveState(
   })
 }
 
+/** External metadata from an optional provider (TMDB). */
+export interface Metadata {
+  media_id: number
+  provider: string
+  provider_id: string
+  title: string | null
+  overview: string | null
+  poster_path: string | null
+  backdrop_path: string | null
+  release_date: string | null
+  vote_average: number | null
+  confidence: number
+  fetched_at: number
+}
+
+/** `GET /media/:id`: the row plus whatever matched it. */
+export interface MediaDetail extends Media {
+  metadata?: Metadata
+  poster_url?: string
+}
+
+export interface MetadataStatus {
+  /** What the configuration asks for (`none` or `tmdb`). */
+  configured: string
+  /** The provider actually active (null when disabled or keyless). */
+  provider: string | null
+  language: string
+}
+
+export function fetchMediaDetail(id: number): Promise<MediaDetail> {
+  return request<MediaDetail>(`/api/v1/media/${id}`)
+}
+
+export function fetchMetadataStatus(): Promise<MetadataStatus> {
+  return request<MetadataStatus>('/api/v1/metadata')
+}
+
+export function matchMetadata(sourceId?: number): Promise<{
+  queued: number
+  fresh: number
+}> {
+  return request<{ queued: number; fresh: number }>('/api/v1/metadata/match', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source_id: sourceId ?? null }),
+  })
+}
+
 export interface PluginSummary {
   id: string
   name: string

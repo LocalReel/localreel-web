@@ -8,6 +8,7 @@ import {
   describeError,
   displayTitle,
   fetchMedia,
+  fetchMediaDetail,
   fetchPreview,
   fetchState,
   fetchTracks,
@@ -16,6 +17,7 @@ import {
   saveState,
   thumbnailUrl,
   type Media,
+  type MediaDetail,
   type MediaFilter,
   type MediaPage,
   type Playback,
@@ -315,6 +317,7 @@ function Player({
   const [preview, setPreview] = useState<PreviewSprite | null>(null)
   const [hoverRatio, setHoverRatio] = useState<number | null>(null)
   const [played, setPlayed] = useState(0)
+  const [detail, setDetail] = useState<MediaDetail | null>(null)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const [hlsMode, setHlsMode] = useState(false)
   const cancelled = useRef(false)
@@ -371,6 +374,14 @@ function Player({
       })
       .catch(() => {
         if (!stopped) setPreview(null)
+      })
+    // Optional metadata: a poster and a description, when a provider matched.
+    fetchMediaDetail(media.id)
+      .then(next => {
+        if (!stopped) setDetail(next)
+      })
+      .catch(() => {
+        if (!stopped) setDetail(null)
       })
     return () => {
       stopped = true
@@ -447,8 +458,10 @@ function Player({
   const direct = playback?.mode === 'direct' || playback?.mode === 'ready'
   const source = direct ? playback?.url : undefined
   const hlsSource = source && /\.m3u8($|\?)/i.test(source) ? source : undefined
-  const poster = useMemo(() => thumbnailUrl(media) ?? undefined, [media])
-
+  const poster = useMemo(
+    () => detail?.poster_url ?? thumbnailUrl(media) ?? undefined,
+    [detail, media],
+  )
   useEffect(() => {
     if (!hlsSource) return
     const element = video.current
@@ -582,13 +595,16 @@ function Player({
           </div>
         )}
         <div className="player-meta">
-          <strong>{displayTitle(media)}</strong>
+          <strong>{detail?.metadata?.title ?? displayTitle(media)}</strong>
           <span>
             {media.video_codec ?? t('common.unknownCodec')} ·{' '}
             {formatDuration(media.duration)}
             {playback?.mode === 'preparing' ? ` · ${t('player.transcoding')}` : ''}
           </span>
         </div>
+        {detail?.metadata?.overview && (
+          <p className="player-overview">{detail.metadata.overview}</p>
+        )}
         {(playFailed || error) && (
           <div className="notice error">
             <span>{playFailed ? t('player.unable') : error}</span>

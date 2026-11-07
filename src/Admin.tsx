@@ -11,12 +11,14 @@ import {
   fetchAdminHealth,
   fetchCacheStats,
   fetchJobs,
+  fetchMetadataStatus,
   fetchPluginAudit,
   fetchPlugins,
   fetchScanRuns,
   fetchSources,
   fetchUsers,
   importBackup,
+  matchMetadata,
   remapSource,
   restoreBackup,
   runCacheGc,
@@ -30,6 +32,7 @@ import {
   type CacheGcReport,
   type CacheStats,
   type JobRecord,
+  type MetadataStatus,
   type PluginAuditEntry,
   type PluginSummary,
   type RemapReport,
@@ -94,6 +97,12 @@ export default function Admin() {
   const [cache, setCache] = useState<CacheStats | null>(null)
   const [plugins, setPlugins] = useState<PluginSummary[]>([])
   const [pluginAudit, setPluginAudit] = useState<PluginAuditEntry[]>([])
+  const [metadata, setMetadata] = useState<MetadataStatus | null>(null)
+  const [matchingMetadata, setMatchingMetadata] = useState(false)
+  const [metadataMatched, setMetadataMatched] = useState<{
+    queued: number
+    fresh: number
+  } | null>(null)
   const [gcResult, setGcResult] = useState<CacheGcReport | null>(null)
   const [gcRunning, setGcRunning] = useState(false)
   const [removing, setRemoving] = useState<number | null>(null)
@@ -138,22 +147,50 @@ export default function Admin() {
     setErrorDetail(parts.detail ?? null)
   }, [])
 
+  /**
+   * Ask the server to match every stale item against the provider.
+   *
+   * The work runs as jobs, so this only reports how many were queued.
+   */
+  const matchAllMetadata = useCallback(async () => {
+    setMatchingMetadata(true)
+    setMetadataMatched(null)
+    setError(null)
+    try {
+      const report = await matchMetadata()
+      setMetadataMatched(report)
+    } catch (cause) {
+      fail(cause)
+    } finally {
+      setMatchingMetadata(false)
+    }
+  }, [fail])
+
   const load = useCallback(async () => {
     // Once the process is stopping, its API is gone: stop polling so the page
     // shows the shutdown notice instead of a connection error.
     if (shutdownRef.current) return
     setError(null)
     try {
-      const [nextHealth, nextSources, nextJobs, nextRuns, nextCache, nextPlugins, nextAudit] =
-        await Promise.all([
-          fetchAdminHealth(),
-          fetchSources(true),
-          fetchJobs(20),
-          fetchScanRuns(20),
-          fetchCacheStats(),
-          fetchPlugins(),
-          fetchPluginAudit(20),
-        ])
+      const [
+        nextHealth,
+        nextSources,
+        nextJobs,
+        nextRuns,
+        nextCache,
+        nextPlugins,
+        nextAudit,
+        nextMetadata,
+      ] = await Promise.all([
+        fetchAdminHealth(),
+        fetchSources(true),
+        fetchJobs(20),
+        fetchScanRuns(20),
+        fetchCacheStats(),
+        fetchPlugins(),
+        fetchPluginAudit(20),
+        fetchMetadataStatus(),
+      ])
       setHealth(nextHealth)
       setSources(nextSources)
       setJobs(nextJobs)
@@ -161,6 +198,7 @@ export default function Admin() {
       setCache(nextCache)
       setPlugins(nextPlugins.plugins)
       setPluginAudit(nextAudit.entries)
+      setMetadata(nextMetadata)
     } catch (cause) {
       fail(cause)
     } finally {
@@ -1114,6 +1152,37 @@ export default function Admin() {
           </dl>
         </section>
       )}
+
+      <section className="panel">
+        <h2>{t('admin.metadata.title')}</h2>
+        <p className="muted">{t('admin.metadata.help')}</p>
+        {metadata?.provider ? (
+          <p>
+            {t('admin.metadata.active', {
+              provider: metadata.provider,
+              language: metadata.language,
+            })}
+          </p>
+        ) : (
+          <p className="muted">{t('admin.metadata.none')}</p>
+        )}
+        <button
+          type="button"
+          className="button"
+          disabled={!metadata?.provider || matchingMetadata}
+          onClick={() => void matchAllMetadata()}
+        >
+          {t('admin.metadata.match')}
+        </button>
+        {metadataMatched && (
+          <p className="notice">
+            {t('admin.metadata.queued', {
+              count: metadataMatched.queued,
+              fresh: metadataMatched.fresh,
+            })}
+          </p>
+        )}
+      </section>
 
       <section className="panel">
         <h2>{t('admin.plugins.title')}</h2>
