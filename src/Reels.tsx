@@ -7,7 +7,9 @@ import {
   type SyntheticEvent,
 } from 'react'
 import LangSwitch from './LangSwitch'
+import ErrorDetail from './ErrorDetail'
 import {
+  describeError,
   fetchFeed,
   preparePlayback,
   saveState,
@@ -160,8 +162,12 @@ export default function Reels() {
       })
       .catch((cause: unknown) => {
         if (!aliveRef.current) return
-        const message = cause instanceof Error ? cause.message : String(cause)
-        const failed: Playback = { mode: 'failed', message }
+        const parts = describeError(cause)
+        const failed: Playback = {
+          mode: 'failed',
+          message: parts.message,
+          detail: parts.detail,
+        }
         playbackRef.current = { ...playbackRef.current, [id]: failed }
         setPlayback(playbackRef.current)
       })
@@ -999,6 +1005,12 @@ function ReelSlide({
           <div className="reel-error" role="alert">
             <h3>{t('reels.error.title')}</h3>
             <p>{t('reels.error.body')}</p>
+            {playback?.mode === 'failed' && playback.message && (
+              <p className="reel-error-message">{playback.message}</p>
+            )}
+            {playback?.mode === 'failed' && (
+              <ErrorDetail detail={playback.detail} t={t} />
+            )}
             <button type="button" className="reel-button" onClick={handleRetry}>
               {t('reels.retry')}
             </button>

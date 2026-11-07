@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import LangSwitch from './LangSwitch'
+import ErrorDetail from './ErrorDetail'
 import { useAuth } from './auth'
 import {
   addSource,
   createUser,
   deleteSource,
   deleteUser,
+  describeError,
   fetchAdminHealth,
   fetchCacheStats,
   fetchJobs,
@@ -100,6 +102,7 @@ export default function Admin() {
   const latestGc = jobs.find(job => job.kind === 'cache_gc')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [scanning, setScanning] = useState<number | null>(null)
   const [toggling, setToggling] = useState<number | null>(null)
 
@@ -118,6 +121,16 @@ export default function Admin() {
   const [shutdownDone, setShutdownDone] = useState(false)
 
   const shutdownRef = useRef(false)
+
+  /**
+   * Show a failure, keeping the server's diagnostics apart from the message.
+   * Only an administrator receives `detail`, and only sometimes.
+   */
+  const fail = useCallback((cause: unknown) => {
+    const parts = describeError(cause)
+    setError(parts.message)
+    setErrorDetail(parts.detail ?? null)
+  }, [])
 
   const load = useCallback(async () => {
     // Once the process is stopping, its API is gone: stop polling so the page
@@ -139,7 +152,7 @@ export default function Admin() {
       setRuns(nextRuns)
       setCache(nextCache)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setLoading(false)
     }
@@ -295,7 +308,7 @@ export default function Admin() {
       )
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setRemoving(null)
     }
@@ -318,7 +331,7 @@ export default function Admin() {
       setBackupReport(report)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setBackupBusy(false)
     }
@@ -337,7 +350,7 @@ export default function Admin() {
       setBackupReport(null)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setBackupBusy(false)
     }
@@ -351,7 +364,7 @@ export default function Admin() {
       setGcResult(report)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setGcRunning(false)
     }
@@ -364,7 +377,7 @@ export default function Admin() {
       await setSourceEnabled(source.id, !source.enabled)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setToggling(null)
     }
@@ -385,7 +398,7 @@ export default function Admin() {
       const report = await remapSource(remapFor.id, remapUri.trim(), true)
       setRemapReport(report)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setRemapBusy(false)
     }
@@ -418,7 +431,7 @@ export default function Admin() {
       setRemapReport(null)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setRemapBusy(false)
     }
@@ -431,7 +444,7 @@ export default function Admin() {
       await setSourceArchived(source.id, !source.archived_at)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setToggling(null)
     }
@@ -444,7 +457,7 @@ export default function Admin() {
       await triggerScan(sourceId)
       await load()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setScanning(null)
     }
@@ -459,7 +472,7 @@ export default function Admin() {
       shutdownRef.current = true
       setShutdownDone(true)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause))
+      fail(cause)
     } finally {
       setShuttingDown(false)
     }
@@ -485,7 +498,12 @@ export default function Admin() {
         </div>
       </header>
 
-      {error && <div className="notice error">{error}</div>}
+      {error && (
+        <div className="notice error">
+          <span>{error}</span>
+          <ErrorDetail detail={errorDetail} t={t} />
+        </div>
+      )}
       {actionMessage && <div className="notice">{actionMessage}</div>}
       {loading && !health && <div className="notice">{t('admin.loading')}</div>}
 
@@ -514,6 +532,14 @@ export default function Admin() {
           <article className="stat">
             <span className="stat-label">{t('admin.stat.media')}</span>
             <strong>{health.media_count}</strong>
+          </article>
+          <article className="stat">
+            <span className="stat-label">{t('admin.stat.watch')}</span>
+            <strong className={health.watchers.enabled ? 'ok' : 'bad'}>
+              {health.watchers.enabled
+                ? t('admin.watch.active', { count: health.watchers.active })
+                : t('admin.watch.disabled')}
+            </strong>
           </article>
         </section>
       )}
@@ -1030,6 +1056,18 @@ export default function Admin() {
             <dd className="mono">{health.transcode_dir}</dd>
             <dt>{t('admin.paths.version')}</dt>
             <dd className="mono">{health.version}</dd>
+            <dt>{t('admin.paths.watch')}</dt>
+            <dd>
+              {health.watchers.enabled
+                ? t('admin.watch.active', { count: health.watchers.active })
+                : t('admin.watch.disabled')}
+              {health.watchers.skipped.length > 0 && (
+                <>
+                  {' · '}
+                  {t('admin.watch.skipped')}: {health.watchers.skipped.join(', ')}
+                </>
+              )}
+            </dd>
           </dl>
         </section>
       )}

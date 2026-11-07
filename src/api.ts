@@ -58,6 +58,11 @@ export interface Playback {
   url?: string
   job_id?: string
   message?: string
+  /**
+   * Client-side diagnostics attached when the prepare call itself failed; the
+   * server never sends this field inside a successful playback response.
+   */
+  detail?: string
 }
 
 export type MediaFilter = 'all' | 'favorites' | 'continue'
@@ -161,6 +166,15 @@ export interface CacheGcReport {
   remaining_bytes: number
 }
 
+export interface WatcherStatus {
+  /** Whether watching is configured at all (`[scan] watch` / `LOCALREEL_WATCH`). */
+  enabled: boolean
+  /** Sources with a live filesystem subscription. */
+  active: number
+  /** Sources that cannot be watched, as `kind:uri`. */
+  skipped: string[]
+}
+
 export interface AdminHealth {
   status: string
   version: string
@@ -170,24 +184,40 @@ export interface AdminHealth {
   data_dir: string
   thumbnail_dir: string
   transcode_dir: string
+  watchers: WatcherStatus
   jobs: JobRecord[]
 }
 
 interface ApiErrorBody {
-  error?: { code?: string; message?: string }
+  error?: { code?: string; message?: string; detail?: string }
 }
 
 /** An HTTP error that keeps the status code, so the UI can react to 401/403. */
 export class ApiError extends Error {
   status: number
   code: string
+  /**
+   * Server-side diagnostics (a local path, an ffmpeg stderr tail).
+   *
+   * Only an administrator on loopback — or one running with `RUST_LOG=debug` —
+   * receives this, so it is frequently absent.
+   */
+  detail?: string
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, detail?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.detail = detail
   }
+}
+
+/** Split any thrown value into text to show and optional diagnostics. */
+export function describeError(cause: unknown): { message: string; detail?: string } {
+  if (cause instanceof ApiError) return { message: cause.message, detail: cause.detail }
+  if (cause instanceof Error) return { message: cause.message }
+  return { message: String(cause) }
 }
 
 /**
@@ -237,14 +267,16 @@ async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     let message = `HTTP ${response.status}`
     let code = 'http_error'
+    let detail: string | undefined
     try {
       const body = (await response.json()) as ApiErrorBody
       if (body.error?.message) message = body.error.message
       if (body.error?.code) code = body.error.code
+      if (body.error?.detail) detail = body.error.detail
     } catch {
       // keep the status-based message
     }
-    throw new ApiError(response.status, code, message)
+    throw new ApiError(response.status, code, message, detail)
   }
   if (response.status === 204) {
     return undefined as T

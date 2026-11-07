@@ -36,6 +36,7 @@ const en = {
   // Values shared by more than one page
   'common.unknownCodec': 'unknown',
   'common.missing': 'missing',
+  'error.detail': 'Details',
 
   // Library
   'library.kicker': 'Local-first media',
@@ -97,6 +98,7 @@ const en = {
   'admin.stat.database': 'Database',
   'admin.stat.ffmpeg': 'ffmpeg',
   'admin.stat.media': 'Media',
+  'admin.stat.watch': 'Auto watch',
   'admin.status.connected': 'connected',
   'admin.status.unavailable': 'unavailable',
   'admin.status.available': 'available',
@@ -192,6 +194,10 @@ const en = {
   'admin.paths.thumbnails': 'Thumbnails',
   'admin.paths.transcodes': 'Transcodes',
   'admin.paths.version': 'Version',
+  'admin.paths.watch': 'Watchers',
+  'admin.watch.active': '{count} watching',
+  'admin.watch.disabled': 'off',
+  'admin.watch.skipped': 'Not watched',
 
   // Admin: destructive source removal
   'admin.remove.confirm':
@@ -290,6 +296,7 @@ const zh: Record<TranslationKey, string> = {
   // Values shared by more than one page
   'common.unknownCodec': '未知',
   'common.missing': '缺失',
+  'error.detail': '详情',
 
   // Library
   'library.kicker': '本地优先的媒体库',
@@ -351,6 +358,7 @@ const zh: Record<TranslationKey, string> = {
   'admin.stat.database': '数据库',
   'admin.stat.ffmpeg': 'ffmpeg',
   'admin.stat.media': '媒体',
+  'admin.stat.watch': '自动监听',
   'admin.status.connected': '已连接',
   'admin.status.unavailable': '不可用',
   'admin.status.available': '可用',
@@ -446,6 +454,10 @@ const zh: Record<TranslationKey, string> = {
   'admin.paths.thumbnails': '缩略图目录',
   'admin.paths.transcodes': '转码目录',
   'admin.paths.version': '版本',
+  'admin.paths.watch': '自动监听',
+  'admin.watch.active': '{count} 个源监听中',
+  'admin.watch.disabled': '未启用',
+  'admin.watch.skipped': '未监听',
 
   // Admin: destructive source removal
   'admin.remove.confirm':

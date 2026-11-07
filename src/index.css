@@ -124,6 +124,45 @@ h1 {
   color: #b3261e;
 }
 
+/* Server diagnostics under an error, folded away unless asked for. Only an
+   administrator receives the `detail` payload at all. */
+.error-detail {
+  margin-top: 0.5rem;
+}
+
+.error-detail summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.error-detail pre {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.6rem;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 12rem;
+  overflow: auto;
+}
+
+.reel-error .error-detail {
+  color: var(--muted);
+}
+
+.reel-error .error-detail pre {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.reel-error-message {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));

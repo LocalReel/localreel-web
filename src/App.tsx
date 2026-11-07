@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Admin from './Admin'
+import ErrorDetail from './ErrorDetail'
 import LangSwitch from './LangSwitch'
 import Reels from './Reels'
 import {
+  describeError,
   displayTitle,
   fetchMedia,
   fetchState,
@@ -119,6 +121,7 @@ function Library() {
   const [page, setPage] = useState<MediaPage | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<MediaFilter>('all')
   const [includeArchived, setIncludeArchived] = useState(false)
@@ -130,6 +133,7 @@ function Library() {
       const current = ++requestId.current
       setLoading(!append)
       setError(null)
+      setErrorDetail(null)
       try {
         const next = await fetchMedia({
           q: query.trim() || undefined,
@@ -146,7 +150,9 @@ function Library() {
         )
       } catch (cause) {
         if (current === requestId.current) {
-          setError(cause instanceof Error ? cause.message : String(cause))
+          const parts = describeError(cause)
+          setError(parts.message)
+          setErrorDetail(parts.detail ?? null)
         }
       } finally {
         if (current === requestId.current) setLoading(false)
@@ -221,7 +227,12 @@ function Library() {
         </div>
       </section>
 
-      {error && <div className="notice error">{error}</div>}
+      {error && (
+        <div className="notice error">
+          <span>{error}</span>
+          <ErrorDetail detail={errorDetail} t={t} />
+        </div>
+      )}
       {loading && !page && <div className="notice">{t('library.loading')}</div>}
       {empty && (
         <div className="notice">
@@ -292,6 +303,7 @@ function Player({
 }) {
   const [playback, setPlayback] = useState<Playback | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [playFailed, setPlayFailed] = useState(false)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const [hlsMode, setHlsMode] = useState(false)
@@ -315,7 +327,9 @@ function Player({
         }
       } catch (cause) {
         if (!cancelled.current) {
-          setError(cause instanceof Error ? cause.message : String(cause))
+          const parts = describeError(cause)
+          setError(parts.message)
+          setErrorDetail(parts.detail ?? null)
         }
       }
     }
@@ -414,6 +428,7 @@ function Player({
       const Hls = module.default
       if (!Hls.isSupported()) {
         setError(t('player.hlsUnsupported'))
+        setErrorDetail(null)
         return
       }
       instance = new Hls({ enableWorker: true })
@@ -432,6 +447,7 @@ function Player({
     if (hlsMode) return
     setPlayFailed(false)
     setError(null)
+    setErrorDetail(null)
     setPlayback(null)
     setHlsMode(true)
   }
@@ -493,7 +509,8 @@ function Player({
         </div>
         {(playFailed || error) && (
           <div className="notice error">
-            {playFailed ? t('player.unable') : error}
+            <span>{playFailed ? t('player.unable') : error}</span>
+            <ErrorDetail detail={playFailed ? null : errorDetail} t={t} />
           </div>
         )}
       </div>
