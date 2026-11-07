@@ -558,6 +558,12 @@ export default function Admin() {
               })}
             </strong>
           </article>
+          <article className="stat">
+            <span className="stat-label">{t('admin.stat.hwaccel')}</span>
+            <strong className={health.hwaccel === 'none' ? '' : 'ok'}>
+              {health.hwaccel === 'none' ? t('admin.status.cpu') : health.hwaccel}
+            </strong>
+          </article>
         </section>
       )}
 

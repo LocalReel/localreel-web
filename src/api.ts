@@ -189,6 +189,9 @@ export interface TranscodeStatus {
 /** What the installed ffmpeg/ffprobe pair can do. */
 export type FfmpegCapability = 'full' | 'probe-only' | 'missing'
 
+/** Resolved hardware acceleration; `none` means the CPU encodes. */
+export type HwAccel = 'auto' | 'none' | 'nvenc' | 'qsv' | 'vaapi' | 'videotoolbox'
+
 export interface AdminHealth {
   status: string
   version: string
@@ -196,6 +199,8 @@ export interface AdminHealth {
   /** Whether transcoding is possible (`ffmpeg_capability === 'full'`). */
   ffmpeg: boolean
   ffmpeg_capability: FfmpegCapability
+  /** The accelerator actually in use (`none` when falling back to the CPU). */
+  hwaccel: HwAccel
   media_count: number
   data_dir: string
   thumbnail_dir: string
