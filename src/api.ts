@@ -175,6 +175,17 @@ export interface WatcherStatus {
   skipped: string[]
 }
 
+export interface TranscodeStatus {
+  /** Jobs currently holding an ffmpeg slot. */
+  running: number
+  /** Jobs waiting for one. */
+  queued: number
+  /** Configured maximum. */
+  limit: number
+  /** Live playback sessions. */
+  sessions: number
+}
+
 export interface AdminHealth {
   status: string
   version: string
@@ -185,6 +196,7 @@ export interface AdminHealth {
   thumbnail_dir: string
   transcode_dir: string
   watchers: WatcherStatus
+  transcodes: TranscodeStatus
   jobs: JobRecord[]
 }
 

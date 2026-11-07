@@ -541,7 +541,26 @@ export default function Admin() {
                 : t('admin.watch.disabled')}
             </strong>
           </article>
+          <article className="stat">
+            <span className="stat-label">{t('admin.stat.transcode')}</span>
+            <strong
+              className={
+                health.transcodes.running < health.transcodes.limit ? 'ok' : 'bad'
+              }
+            >
+              {t('admin.transcode.usage', {
+                running: health.transcodes.running,
+                limit: health.transcodes.limit,
+              })}
+            </strong>
+          </article>
         </section>
+      )}
+
+      {health && health.transcodes.queued > 0 && (
+        <p className="notice">
+          {t('admin.transcode.queued', { count: health.transcodes.queued })}
+        </p>
       )}
 
       {health && !health.ffmpeg && (
