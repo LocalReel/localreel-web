@@ -494,6 +494,10 @@ export default function Admin() {
         </section>
       )}
 
+      {health && !health.ffmpeg && (
+        <p className="notice error">{t('admin.ffmpeg.hint')}</p>
+      )}
+
       <section className="panel">
         <div className="panel-head">
           <h2>{t('admin.addSource.title')}</h2>

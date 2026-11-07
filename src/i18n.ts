@@ -253,6 +253,8 @@ const en = {
   'admin.users.never': 'never',
   'admin.users.created': 'Created the account {username}.',
   'admin.users.failed': 'Could not change the account: {message}',
+  'admin.ffmpeg.hint':
+    'ffmpeg was not found: metadata, thumbnails and transcoding are disabled. Install ffmpeg, place it in ffmpeg/bin next to the program, or set LOCALREEL_FFMPEG.',
   'admin.backup.usersCreated':
     '{count} restored account(s) have no password yet; set one in Accounts.',
 } as const
@@ -493,6 +495,8 @@ const zh: Record<TranslationKey, string> = {
   'admin.users.never': '从未',
   'admin.users.created': '已创建账户 {username}。',
   'admin.users.failed': '账户操作失败：{message}',
+  'admin.ffmpeg.hint':
+    '没有找到 ffmpeg：元数据、缩略图与转码不可用。请安装 ffmpeg、放到程序旁边的 ffmpeg/bin，或设置 LOCALREEL_FFMPEG。',
   'admin.backup.usersCreated':
     '恢复了 {count} 个账户，它们还没有密码，请在「账户」里设置。',
 }
