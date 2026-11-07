@@ -526,7 +526,11 @@ export default function Admin() {
           <article className="stat">
             <span className="stat-label">{t('admin.stat.ffmpeg')}</span>
             <strong className={health.ffmpeg ? 'ok' : 'bad'}>
-              {health.ffmpeg ? t('admin.status.available') : t('common.missing')}
+              {health.ffmpeg
+                ? t('admin.status.available')
+                : health.ffmpeg_capability === 'probe-only'
+                  ? t('admin.status.probeOnly')
+                  : t('common.missing')}
             </strong>
           </article>
           <article className="stat">
@@ -563,8 +567,12 @@ export default function Admin() {
         </p>
       )}
 
-      {health && !health.ffmpeg && (
+      {health && health.ffmpeg_capability === 'missing' && (
         <p className="notice error">{t('admin.ffmpeg.hint')}</p>
+      )}
+
+      {health && health.ffmpeg_capability === 'probe-only' && (
+        <p className="notice">{t('admin.ffmpeg.probeOnly')}</p>
       )}
 
       <section className="panel">

@@ -186,11 +186,16 @@ export interface TranscodeStatus {
   sessions: number
 }
 
+/** What the installed ffmpeg/ffprobe pair can do. */
+export type FfmpegCapability = 'full' | 'probe-only' | 'missing'
+
 export interface AdminHealth {
   status: string
   version: string
   database: boolean
+  /** Whether transcoding is possible (`ffmpeg_capability === 'full'`). */
   ffmpeg: boolean
+  ffmpeg_capability: FfmpegCapability
   media_count: number
   data_dir: string
   thumbnail_dir: string

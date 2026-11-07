@@ -105,6 +105,7 @@ const en = {
   'admin.status.connected': 'connected',
   'admin.status.unavailable': 'unavailable',
   'admin.status.available': 'available',
+  'admin.status.probeOnly': 'probe only',
   'admin.healthStatus.ok': 'ok',
   'admin.jobStatus.queued': 'queued',
   'admin.jobStatus.running': 'running',
@@ -272,6 +273,8 @@ const en = {
   'admin.shutdown.done': 'The server has stopped. You can close this page.',
   'admin.ffmpeg.hint':
     'ffmpeg was not found: metadata, thumbnails and transcoding are disabled. Install ffmpeg, place it in ffmpeg/bin next to the program, or set LOCALREEL_FFMPEG.',
+  'admin.ffmpeg.probeOnly':
+    'ffprobe only: scanning and cataloguing work, but thumbnails, transcoding and HLS are disabled. Add ffmpeg.exe next to ffprobe.exe to enable them.',
   'admin.backup.usersCreated':
     '{count} restored account(s) have no password yet; set one in Accounts.',
 } as const
@@ -368,6 +371,7 @@ const zh: Record<TranslationKey, string> = {
   'admin.status.connected': '已连接',
   'admin.status.unavailable': '不可用',
   'admin.status.available': '可用',
+  'admin.status.probeOnly': '仅探测',
   'admin.healthStatus.ok': '正常',
   'admin.jobStatus.queued': '排队中',
   'admin.jobStatus.running': '运行中',
@@ -530,6 +534,8 @@ const zh: Record<TranslationKey, string> = {
   'admin.shutdown.done': '服务器已停止，可以关闭这个页面了。',
   'admin.ffmpeg.hint':
     '没有找到 ffmpeg：元数据、缩略图与转码不可用。请安装 ffmpeg、放到程序旁边的 ffmpeg/bin，或设置 LOCALREEL_FFMPEG。',
+  'admin.ffmpeg.probeOnly':
+    '只有 ffprobe：扫描与入库可用，但缩略图、转码与 HLS 暂不可用。把 ffmpeg.exe 放到 ffprobe.exe 旁边即可启用。',
   'admin.backup.usersCreated':
     '恢复了 {count} 个账户，它们还没有密码，请在「账户」里设置。',
 }
