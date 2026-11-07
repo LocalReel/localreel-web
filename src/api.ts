@@ -518,6 +518,38 @@ export function saveState(
   })
 }
 
+export interface PluginSummary {
+  id: string
+  name: string
+  version: string
+  /** Effective permissions, including the storage baseline. */
+  permissions: string[]
+  /** Whether the host will proxy network requests for it. */
+  network: boolean
+  running: boolean
+}
+
+export interface PluginAuditEntry {
+  id: number
+  plugin_id: string
+  permission: string | null
+  action: string
+  detail: string | null
+  at: number
+}
+
+export function fetchPlugins(): Promise<{ plugins: PluginSummary[] }> {
+  return request<{ plugins: PluginSummary[] }>('/api/v1/plugins')
+}
+
+export function fetchPluginAudit(
+  limit = 20,
+): Promise<{ entries: PluginAuditEntry[] }> {
+  return request<{ entries: PluginAuditEntry[] }>(
+    `/api/v1/plugins/audit?limit=${limit}`,
+  )
+}
+
 export function fetchAdminHealth(): Promise<AdminHealth> {
   return request<AdminHealth>('/api/v1/admin/health')
 }

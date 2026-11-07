@@ -1473,3 +1473,33 @@ body.reels-open {
   background-repeat: no-repeat;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
+
+/* Plugin panel: the permissions a plugin actually has, plus its audit trail. */
+.plugin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.plugin-list li {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+}
+
+.plugin-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+
+.plugin-permissions .tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}

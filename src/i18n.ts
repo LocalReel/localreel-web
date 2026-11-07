@@ -206,6 +206,11 @@ const en = {
   'admin.paths.transcodes': 'Transcodes',
   'admin.paths.version': 'Version',
   'admin.paths.watch': 'Watchers',
+  'admin.plugins.title': 'Plugins',
+  'admin.plugins.help':
+    'Configured in localreel.toml. A plugin can only use the permissions listed here; network requests go through the host proxy and are audited.',
+  'admin.plugins.empty': 'No plugins are configured.',
+  'admin.plugins.audit': 'Recent plugin activity',
   'admin.watch.active': '{count} watching',
   'admin.watch.disabled': 'off',
   'admin.watch.skipped': 'Not watched',
@@ -479,6 +484,11 @@ const zh: Record<TranslationKey, string> = {
   'admin.paths.transcodes': '转码目录',
   'admin.paths.version': '版本',
   'admin.paths.watch': '自动监听',
+  'admin.plugins.title': '插件',
+  'admin.plugins.help':
+    '在 localreel.toml 中配置。插件只能使用这里列出的权限；联网请求经宿主代理并记入审计。',
+  'admin.plugins.empty': '尚未配置插件。',
+  'admin.plugins.audit': '插件最近活动',
   'admin.watch.active': '{count} 个源监听中',
   'admin.watch.disabled': '未启用',
   'admin.watch.skipped': '未监听',

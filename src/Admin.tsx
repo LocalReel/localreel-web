@@ -11,6 +11,8 @@ import {
   fetchAdminHealth,
   fetchCacheStats,
   fetchJobs,
+  fetchPluginAudit,
+  fetchPlugins,
   fetchScanRuns,
   fetchSources,
   fetchUsers,
@@ -28,6 +30,8 @@ import {
   type CacheGcReport,
   type CacheStats,
   type JobRecord,
+  type PluginAuditEntry,
+  type PluginSummary,
   type RemapReport,
   type Role,
   type ScanRun,
@@ -88,6 +92,8 @@ export default function Admin() {
   const [jobs, setJobs] = useState<JobRecord[]>([])
   const [runs, setRuns] = useState<ScanRun[]>([])
   const [cache, setCache] = useState<CacheStats | null>(null)
+  const [plugins, setPlugins] = useState<PluginSummary[]>([])
+  const [pluginAudit, setPluginAudit] = useState<PluginAuditEntry[]>([])
   const [gcResult, setGcResult] = useState<CacheGcReport | null>(null)
   const [gcRunning, setGcRunning] = useState(false)
   const [removing, setRemoving] = useState<number | null>(null)
@@ -138,19 +144,23 @@ export default function Admin() {
     if (shutdownRef.current) return
     setError(null)
     try {
-      const [nextHealth, nextSources, nextJobs, nextRuns, nextCache] =
+      const [nextHealth, nextSources, nextJobs, nextRuns, nextCache, nextPlugins, nextAudit] =
         await Promise.all([
           fetchAdminHealth(),
           fetchSources(true),
           fetchJobs(20),
           fetchScanRuns(20),
           fetchCacheStats(),
+          fetchPlugins(),
+          fetchPluginAudit(20),
         ])
       setHealth(nextHealth)
       setSources(nextSources)
       setJobs(nextJobs)
       setRuns(nextRuns)
       setCache(nextCache)
+      setPlugins(nextPlugins.plugins)
+      setPluginAudit(nextAudit.entries)
     } catch (cause) {
       fail(cause)
     } finally {
@@ -1104,6 +1114,60 @@ export default function Admin() {
           </dl>
         </section>
       )}
+
+      <section className="panel">
+        <h2>{t('admin.plugins.title')}</h2>
+        <p className="muted">{t('admin.plugins.help')}</p>
+        {plugins.length === 0 ? (
+          <p className="muted">{t('admin.plugins.empty')}</p>
+        ) : (
+          <>
+            <ul className="plugin-list">
+              {plugins.map(plugin => (
+                <li key={plugin.id}>
+                  <strong>{plugin.name}</strong>
+                  <span className="muted">
+                    {' '}
+                    · {plugin.id} v{plugin.version}
+                  </span>
+                  <div className="plugin-permissions">
+                    {plugin.permissions.map(permission => (
+                      <span key={permission} className="tag">
+                        {permission}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {pluginAudit.length > 0 && (
+              <>
+                <h3>{t('admin.plugins.audit')}</h3>
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>plugin</th>
+                        <th>action</th>
+                        <th>detail</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pluginAudit.slice(0, 10).map(entry => (
+                        <tr key={entry.id}>
+                          <td>{entry.plugin_id}</td>
+                          <td>{entry.action}</td>
+                          <td className="mono">{entry.detail ?? ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </section>
 
       {health && isAdmin && (
         <section className="panel">
