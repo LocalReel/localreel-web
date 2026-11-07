@@ -65,6 +65,25 @@ export interface Playback {
   detail?: string
 }
 
+/** One audio track of a media item. */
+export interface Track {
+  id: number
+  media_id: number
+  /** `audio` today; subtitle is reserved. */
+  kind: string
+  source: 'embedded' | 'sidecar'
+  /** ffmpeg stream index; null for sidecar tracks. */
+  stream_index: number | null
+  path: string | null
+  format: string | null
+  /** Normalized tag such as `zh`, `ja`, `en`. */
+  language: string | null
+  title: string | null
+  channels: number | null
+  is_default: boolean
+  is_forced: boolean
+}
+
 export type MediaFilter = 'all' | 'favorites' | 'continue'
 
 export interface MediaState {
@@ -436,9 +455,28 @@ export function fetchFeed(limit = 100): Promise<FeedPage> {
   return request<FeedPage>(`/api/v1/feed?limit=${limit}`)
 }
 
-export function preparePlayback(id: number, format?: 'hls'): Promise<Playback> {
-  const query = format ? `?format=${format}` : ''
-  return request<Playback>(`/api/v1/media/${id}/playback${query}`, { method: 'POST' })
+/**
+ * Ask the server how to play a media item.
+ *
+ * `audio` names a track id; choosing anything but the default track makes the
+ * server re-mux or transcode, because a browser cannot switch embedded audio.
+ */
+export function preparePlayback(
+  id: number,
+  options: { format?: 'hls'; audio?: number | null } = {},
+): Promise<Playback> {
+  const search = new URLSearchParams()
+  if (options.format) search.set('format', options.format)
+  if (options.audio) search.set('audio', String(options.audio))
+  const suffix = search.toString()
+  return request<Playback>(
+    `/api/v1/media/${id}/playback${suffix ? `?${suffix}` : ''}`,
+    { method: 'POST' },
+  )
+}
+
+export function fetchTracks(id: number): Promise<Track[]> {
+  return request<Track[]>(`/api/v1/media/${id}/tracks`)
 }
 
 export function thumbnailUrl(media: Media): string | null {

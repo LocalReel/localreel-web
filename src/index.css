@@ -1342,3 +1342,86 @@ body.reels-open {
 .add-user input {
   flex: 1 1 10rem;
 }
+
+/* Audio track picker (library player and Reels rail). */
+.track-menu {
+  position: relative;
+}
+
+.track-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  min-width: 13rem;
+  max-width: 20rem;
+  padding: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+.track-popover .track-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.track-popover ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.track-popover li button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.track-popover li button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.track-popover li button.active {
+  background: rgba(0, 0, 0, 0.09);
+  font-weight: 600;
+}
+
+.track-popover em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.track-popover .track-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* The Reels rail is dark and on the right edge: open the list inwards. */
+.reel-audio .track-popover {
+  top: auto;
+  bottom: 0;
+  right: calc(100% + 0.5rem);
+}
+
+.reel-audio .track-menu .mode {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: transparent;
+  color: #fff;
+}

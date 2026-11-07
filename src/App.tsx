@@ -3,11 +3,13 @@ import Admin from './Admin'
 import ErrorDetail from './ErrorDetail'
 import LangSwitch from './LangSwitch'
 import Reels from './Reels'
+import TrackMenu from './TrackMenu'
 import {
   describeError,
   displayTitle,
   fetchMedia,
   fetchState,
+  fetchTracks,
   formatDuration,
   preparePlayback,
   saveState,
@@ -16,6 +18,7 @@ import {
   type MediaFilter,
   type MediaPage,
   type Playback,
+  type Track,
 } from './api'
 import { useLang, type Translate, type TranslationKey } from './i18n'
 import { resumeTarget } from './resume'
@@ -305,6 +308,8 @@ function Player({
   const [error, setError] = useState<string | null>(null)
   const [errorDetail, setErrorDetail] = useState<string | null>(null)
   const [playFailed, setPlayFailed] = useState(false)
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [audioTrack, setAudioTrack] = useState<number | null>(null)
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const [hlsMode, setHlsMode] = useState(false)
   const cancelled = useRef(false)
@@ -319,7 +324,10 @@ function Player({
 
     const resolve = async () => {
       try {
-        const next = await preparePlayback(media.id, hlsMode ? 'hls' : undefined)
+        const next = await preparePlayback(media.id, {
+          format: hlsMode ? 'hls' : undefined,
+          audio: audioTrack,
+        })
         if (cancelled.current) return
         setPlayback(next)
         if (next.mode === 'preparing') {
@@ -339,7 +347,22 @@ function Player({
       cancelled.current = true
       if (timer) window.clearTimeout(timer)
     }
-  }, [media.id, hlsMode])
+  }, [media.id, hlsMode, audioTrack])
+
+  // The track list is per media and does not change while the player is open.
+  useEffect(() => {
+    let stopped = false
+    fetchTracks(media.id)
+      .then(list => {
+        if (!stopped) setTracks(list)
+      })
+      .catch(() => {
+        if (!stopped) setTracks([])
+      })
+    return () => {
+      stopped = true
+    }
+  }, [media.id])
 
   useEffect(() => {
     let stopped = false
@@ -472,6 +495,12 @@ function Player({
         >
           {t('player.hls')}
         </button>
+        <TrackMenu
+          tracks={tracks}
+          selected={audioTrack}
+          onSelect={track => setAudioTrack(track.id)}
+          t={t}
+        />
         {source ? (
           <video
             key={source}

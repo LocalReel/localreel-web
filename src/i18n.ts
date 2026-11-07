@@ -63,6 +63,11 @@ const en = {
   'player.unable': 'Unable to play this file.',
   'player.hls': 'HLS',
   'player.hlsHint': 'Play through an HLS playlist',
+  'player.audio': 'Audio',
+  'player.audio.title': 'Audio track',
+  'player.audio.default': 'default',
+  'player.audio.unknown': 'audio',
+  'player.audio.hint': 'Switching tracks may start a transcoding job.',
   'player.hlsUnsupported': 'This browser cannot play HLS.',
 
   // Reels
@@ -331,6 +336,11 @@ const zh: Record<TranslationKey, string> = {
   'player.unable': '无法播放此文件。',
   'player.hls': 'HLS',
   'player.hlsHint': '通过 HLS 播放列表播放',
+  'player.audio': '音轨',
+  'player.audio.title': '选择音轨',
+  'player.audio.default': '默认',
+  'player.audio.unknown': '未标注',
+  'player.audio.hint': '切换音轨可能需要先转码，请稍等。',
   'player.hlsUnsupported': '此浏览器无法播放 HLS。',
 
   // Reels

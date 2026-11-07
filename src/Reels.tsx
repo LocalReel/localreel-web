@@ -8,14 +8,17 @@ import {
 } from 'react'
 import LangSwitch from './LangSwitch'
 import ErrorDetail from './ErrorDetail'
+import TrackMenu from './TrackMenu'
 import {
   describeError,
   fetchFeed,
+  fetchTracks,
   preparePlayback,
   saveState,
   type FeedItem,
   type Media,
   type Playback,
+  type Track,
 } from './api'
 import {
   feedDisplayTitle,
@@ -108,6 +111,9 @@ export default function Reels() {
   const scroller = useRef<HTMLDivElement | null>(null)
   const itemsRef = useRef<FeedItem[]>([])
   const playbackRef = useRef<Record<number, Playback>>({})
+  // Which audio track each item should play; a ref so `ensurePlayback` (memoised
+  // with no dependencies) always reads the current choice.
+  const audioChoiceRef = useRef<Record<number, number | null>>({})
   const wantedRef = useRef<Set<number>>(new Set())
   const inFlightRef = useRef<Set<number>>(new Set())
   const aliveRef = useRef(true)
@@ -154,7 +160,7 @@ export default function Reels() {
     if (!force && current && current.mode !== 'preparing') return
     if (inFlightRef.current.has(id)) return
     inFlightRef.current.add(id)
-    preparePlayback(id)
+    preparePlayback(id, { audio: audioChoiceRef.current[id] ?? null })
       .then(next => {
         if (!aliveRef.current) return
         playbackRef.current = { ...playbackRef.current, [id]: next }
@@ -201,6 +207,27 @@ export default function Reels() {
       playbackRef.current = next
       setPlayback(next)
       ensurePlayback(id, true)
+    },
+    [ensurePlayback],
+  )
+
+  /**
+   * Switch the audio track of one reel.
+   *
+   * A browser cannot change embedded tracks on a playing file, so the server
+   * re-muxes (or transcodes) and the slide shows `preparing` until it is ready.
+   */
+  const selectAudio = useCallback(
+    (target: FeedItem, track: Track) => {
+      audioChoiceRef.current = {
+        ...audioChoiceRef.current,
+        [target.id]: track.id,
+      }
+      const next = { ...playbackRef.current }
+      delete next[target.id]
+      playbackRef.current = next
+      setPlayback(next)
+      ensurePlayback(target.id, true)
     },
     [ensurePlayback],
   )
@@ -355,6 +382,7 @@ export default function Reels() {
           onRetry={retryPlayback}
           onStep={step}
           onToggleMuted={() => setMuted(value => !value)}
+          onSelectAudio={selectAudio}
         />
       ))}
 
@@ -382,6 +410,7 @@ interface ReelSlideProps {
   onRetry: (id: number) => void
   onStep: (direction: SwipeDirection) => void
   onToggleMuted: () => void
+  onSelectAudio: (item: FeedItem, track: Track) => void
 }
 
 interface GestureState {
@@ -411,8 +440,11 @@ function ReelSlide({
   onRetry,
   onStep,
   onToggleMuted,
+  onSelectAudio,
 }: ReelSlideProps) {
   const video = useRef<HTMLVideoElement | null>(null)
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [audioTrack, setAudioTrack] = useState<number | null>(null)
   const [liked, setLiked] = useState(item.liked)
   const [favorite, setFavorite] = useState(item.favorite)
   const [currentTime, setCurrentTime] = useState(0)
@@ -422,6 +454,22 @@ function ReelSlide({
   const [videoFailed, setVideoFailed] = useState(false)
   const [fit, setFit] = useState<ObjectFit>(() => objectFitForFeedItem(item))
   const [burst, setBurst] = useState(0)
+
+  // Each slide asks for its own track list; it is small and cached by the
+  // browser, and only the visible slides are mounted.
+  useEffect(() => {
+    let stopped = false
+    fetchTracks(item.id)
+      .then(list => {
+        if (!stopped) setTracks(list)
+      })
+      .catch(() => {
+        if (!stopped) setTracks([])
+      })
+    return () => {
+      stopped = true
+    }
+  }, [item.id])
   const [longPressing, setLongPressing] = useState(false)
   const [scrubRatio, setScrubRatio] = useState<number | null>(null)
 
@@ -1029,6 +1077,17 @@ function ReelSlide({
         </div>
 
         <div className="reel-action-rail">
+          <div className="reel-audio">
+            <TrackMenu
+              tracks={tracks}
+              selected={audioTrack}
+              onSelect={track => {
+                setAudioTrack(track.id)
+                onSelectAudio(item, track)
+              }}
+              t={t}
+            />
+          </div>
           <button
             type="button"
             className={liked ? 'reel-action active' : 'reel-action'}
