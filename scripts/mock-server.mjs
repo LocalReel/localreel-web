@@ -101,6 +101,17 @@ export async function startMockServer() {
     response.setHeader('X-Frame-Options', 'DENY')
 
     try {
+      // Since ADR-013 the UI renders a sign-in gate first; without this the
+      // smoke test would only ever see the login screen.
+      if (url.pathname === '/api/v1/auth/status') {
+        sendJson(response, 200, {
+          setup_required: false,
+          authenticated: true,
+          user: { id: 1, username: 'owner', role: 'admin' },
+          mode: 'server',
+        })
+        return
+      }
       if (url.pathname === '/api/v1/feed') {
         sendJson(response, 200, {
           items: [
