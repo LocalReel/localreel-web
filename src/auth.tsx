@@ -13,6 +13,7 @@ import {
   fetchAuthStatus,
   login as apiLogin,
   logout as apiLogout,
+  setCsrfToken,
   setUnauthorizedHandler,
   setupOwner,
   type User,
@@ -57,9 +58,14 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         return
       }
       if (!status.authenticated || !status.user) {
+        // No session means no token; a stale one must not survive a sign-out.
+        setCsrfToken(null)
         setPhase('login')
         return
       }
+      // The cookie survived the reload but the token did not: restore it here
+      // or every later write fails with "missing or invalid CSRF token".
+      setCsrfToken(status.csrf ?? null)
       setUser(status.user)
       setPhase('ready')
     } catch (error) {

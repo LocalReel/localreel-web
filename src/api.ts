@@ -346,6 +346,13 @@ export interface AuthStatus {
   authenticated: boolean
   user: User | null
   mode: string
+  /**
+   * The CSRF token for the session this request already carries.
+   *
+   * Present only when authenticated. A reload keeps the cookie but loses the
+   * token in memory, so the status call restores it.
+   */
+  csrf?: string
 }
 
 interface SessionResponse {
