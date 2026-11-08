@@ -653,6 +653,8 @@ export interface PluginCapabilities {
   version: string
   requested: RequestedCapability[]
   granted: CapabilityGrant[]
+  pending: string[]
+  requires_grant: boolean
   catalog: CapabilityCatalogEntry[]
   forbidden: string[]
 }

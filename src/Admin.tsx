@@ -1474,6 +1474,13 @@ export default function Admin() {
                       <p className="muted capability-phase">
                         {t('admin.plugins.capabilities.phase1')}
                       </p>
+                      {pluginCaps.requires_grant && (
+                        <p className="notice warn">
+                          {t('admin.plugins.capabilities.regrant', {
+                            pending: pluginCaps.pending.join(', '),
+                          })}
+                        </p>
+                      )}
                       {capabilityError && <p className="notice error">{capabilityError}</p>}
                       <h4>{t('admin.plugins.capabilities.requested')}</h4>
                       {pluginCaps.requested.length === 0 ? (

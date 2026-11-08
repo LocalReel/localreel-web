@@ -228,7 +228,9 @@ const en = {
   'admin.plugins.capabilities.help':
     'The plugin requests these capabilities; the host owns the descriptions and risk tiers. A grant is recorded for this plugin version and can be revoked without a restart.',
   'admin.plugins.capabilities.phase1':
-    'Phase 1 records disclosures and grants. A broker that enforces calls at runtime is the next phase.',
+    'The broker enforces net.fetch, secret.use, catalog.write, schedule.request and blob.*. fs.read still uses the storage-root path; the transport/OS sandbox is the next phase.',
+  'admin.plugins.capabilities.regrant':
+    'This version still needs grants: {{pending}}.',
   'admin.plugins.capabilities.requested': 'Requested by the manifest',
   'admin.plugins.capabilities.granted': 'Granted',
   'admin.plugins.capabilities.grant': 'Grant',
@@ -551,7 +553,8 @@ const zh: Record<TranslationKey, string> = {
   'admin.plugins.capabilities.help':
     '插件请求这些能力；说明与风险等级由宿主提供。授予会绑定到当前插件版本，并可在不重启的情况下撤销。',
   'admin.plugins.capabilities.phase1':
-    '第一阶段只记录披露与授予；在运行时强制拦截调用的 broker 是下一阶段。',
+    'broker 已强制 net.fetch、secret.use、catalog.write、schedule.request 与 blob.*；fs.read 仍走 storage-root 旧路径，传输/OS 隔离是下一阶段。',
+  'admin.plugins.capabilities.regrant': '当前版本仍需授权：{{pending}}。',
   'admin.plugins.capabilities.requested': '清单请求',
   'admin.plugins.capabilities.granted': '已授予',
   'admin.plugins.capabilities.grant': '授予',
