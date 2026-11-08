@@ -1496,6 +1496,51 @@ body.reels-open {
   margin-top: 0.35rem;
 }
 
+/* A plugin that is not running says so next to its name. */
+.plugin-state {
+  margin-left: 0.5rem;
+}
+
+.plugin-state.failed {
+  color: #ffb4a8;
+  border-color: rgba(255, 120, 100, 0.45);
+}
+
+.plugin-state.disabled,
+.plugin-state.stopped {
+  color: var(--muted, #9aa0a6);
+}
+
+.plugin-error {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.plugin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.plugin-actions button {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.plugin-log {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.6rem;
+  max-height: 12rem;
+  overflow: auto;
+  font-size: 0.78rem;
+  background: var(--surface-2, rgba(0, 0, 0, 0.15));
+  border-radius: 0.4rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .plugin-permissions .tag {
   padding: 0.1rem 0.45rem;
   border-radius: 999px;

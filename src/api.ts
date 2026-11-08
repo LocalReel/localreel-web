@@ -582,6 +582,18 @@ export interface PluginSummary {
   /** Whether the host will proxy network requests for it. */
   network: boolean
   running: boolean
+  /** Host-side lifecycle state; `running` mirrors this. */
+  state: 'running' | 'starting' | 'unhealthy' | 'failed' | 'disabled' | 'stopped'
+  /** Whether the configuration entry is switched on. */
+  enabled: boolean
+  /** Why the plugin is not running, when it is not. */
+  error?: string | null
+  /** Restart count (0 until the supervisor lands). */
+  restarts: number
+  generation: number
+  started_at?: number | null
+  /** The package this entry came from, for diagnostics. */
+  package: string
 }
 
 export interface PluginAuditEntry {
@@ -602,6 +614,42 @@ export function fetchPluginAudit(
 ): Promise<{ entries: PluginAuditEntry[] }> {
   return request<{ entries: PluginAuditEntry[] }>(
     `/api/v1/plugins/audit?limit=${limit}`,
+  )
+}
+
+/** Stop a plugin's process and start a fresh generation. */
+export function restartPlugin(id: string): Promise<{ ok: boolean; id: string }> {
+  return request<{ ok: boolean; id: string }>(
+    `/api/v1/plugins/${encodeURIComponent(id)}/restart`,
+    { method: 'POST' },
+  )
+}
+
+/**
+ * Turn a plugin on or off at runtime.
+ *
+ * `persist` also rewrites `enabled` in localreel.toml; without it the switch
+ * only lasts until the process restarts.
+ */
+export function setPluginEnabled(
+  id: string,
+  enabled: boolean,
+  persist = false,
+): Promise<{ ok: boolean; id: string; state: string | null; persisted: boolean | null }> {
+  const action = enabled ? 'enable' : 'disable'
+  return request(
+    `/api/v1/plugins/${encodeURIComponent(id)}/${action}?persist=${persist ? 'true' : 'false'}`,
+    { method: 'POST' },
+  )
+}
+
+/** The tail of a plugin's stderr, for diagnosing a provider that will not run. */
+export function fetchPluginLogs(
+  id: string,
+  bytes = 8192,
+): Promise<{ id: string; log: string }> {
+  return request<{ id: string; log: string }>(
+    `/api/v1/plugins/${encodeURIComponent(id)}/logs?bytes=${bytes}`,
   )
 }
 

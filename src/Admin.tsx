@@ -13,6 +13,7 @@ import {
   fetchJobs,
   fetchMetadataStatus,
   fetchPluginAudit,
+  fetchPluginLogs,
   fetchPlugins,
   fetchScanRuns,
   fetchSources,
@@ -20,10 +21,12 @@ import {
   importBackup,
   matchMetadata,
   remapSource,
+  restartPlugin,
   restoreBackup,
   runCacheGc,
   setSourceArchived,
   setSourceEnabled,
+  setPluginEnabled,
   shutdownServer,
   triggerScan,
   updateUser,
@@ -134,6 +137,11 @@ export default function Admin() {
   // Stopping the process from the page (platforms without a tray).
   const [shuttingDown, setShuttingDown] = useState(false)
   const [shutdownDone, setShutdownDone] = useState(false)
+
+  // Plugin controls: only one action at a time, and the log panel follows the
+  // plugin whose button was pressed.
+  const [pluginBusy, setPluginBusy] = useState<string | null>(null)
+  const [pluginLog, setPluginLog] = useState<{ id: string; text: string } | null>(null)
 
   const shutdownRef = useRef(false)
 
@@ -428,6 +436,46 @@ export default function Admin() {
       fail(cause)
     } finally {
       setToggling(null)
+    }
+  }
+
+  /**
+   * Ask the supervisor to restart, enable or disable a plugin.
+   *
+   * The work happens asynchronously in the server's supervisor thread, so the
+   * immediate response only says the intent was accepted; `load()` refreshes
+   * the descriptors a moment later.
+   */
+  const controlPlugin = async (
+    plugin: PluginSummary,
+    action: 'restart' | 'enable' | 'disable',
+  ) => {
+    setPluginBusy(plugin.id)
+    setError(null)
+    try {
+      if (action === 'restart') {
+        await restartPlugin(plugin.id)
+      } else {
+        await setPluginEnabled(plugin.id, action === 'enable')
+      }
+      await load()
+    } catch (cause) {
+      fail(cause)
+    } finally {
+      setPluginBusy(null)
+    }
+  }
+
+  const showPluginLogs = async (plugin: PluginSummary) => {
+    setPluginBusy(plugin.id)
+    setError(null)
+    try {
+      const { log } = await fetchPluginLogs(plugin.id)
+      setPluginLog({ id: plugin.id, text: log })
+    } catch (cause) {
+      fail(cause)
+    } finally {
+      setPluginBusy(null)
     }
   }
 
@@ -1199,6 +1247,16 @@ export default function Admin() {
                     {' '}
                     · {plugin.id} v{plugin.version}
                   </span>
+                  {plugin.state !== 'running' && (
+                    <span className={`tag plugin-state ${plugin.state}`}>
+                      {t(`admin.plugins.state.${plugin.state}` as TranslationKey)}
+                    </span>
+                  )}
+                  {plugin.error && (
+                    <p className="muted mono plugin-error">
+                      {t('admin.plugins.error', { error: plugin.error })}
+                    </p>
+                  )}
                   <div className="plugin-permissions">
                     {plugin.permissions.map(permission => (
                       <span key={permission} className="tag">
@@ -1206,6 +1264,48 @@ export default function Admin() {
                       </span>
                     ))}
                   </div>
+                  <div className="plugin-actions">
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={pluginBusy === plugin.id}
+                      onClick={() => controlPlugin(plugin, 'restart')}
+                    >
+                      {t('admin.plugins.restart')}
+                    </button>
+                    {plugin.enabled ? (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={pluginBusy === plugin.id}
+                        onClick={() => controlPlugin(plugin, 'disable')}
+                      >
+                        {t('admin.plugins.disable')}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="secondary"
+                        disabled={pluginBusy === plugin.id}
+                        onClick={() => controlPlugin(plugin, 'enable')}
+                      >
+                        {t('admin.plugins.enable')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={pluginBusy === plugin.id}
+                      onClick={() => showPluginLogs(plugin)}
+                    >
+                      {t('admin.plugins.logs')}
+                    </button>
+                  </div>
+                  {pluginLog?.id === plugin.id && (
+                    <pre className="plugin-log mono">
+                      {pluginLog.text.trim() || t('admin.plugins.logs.empty')}
+                    </pre>
+                  )}
                 </li>
               ))}
             </ul>
