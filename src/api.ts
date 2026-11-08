@@ -657,6 +657,32 @@ export function fetchAdminHealth(): Promise<AdminHealth> {
   return request<AdminHealth>('/api/v1/admin/health')
 }
 
+export interface RemoteUpdate {
+  enabled: boolean
+  current: string
+  latest?: {
+    version: string
+    url: string
+    published_at?: string | null
+    setup_url?: string | null
+  } | null
+  update_available: boolean
+  checked_at?: number | null
+  error?: string | null
+}
+
+/**
+ * Check the release feed through the server, which caches the answer.
+ *
+ * `refresh` asks for a fresh look instead of the cached one; the server never
+ * downloads or applies anything, it only reports what is published.
+ */
+export function fetchUpdate(refresh = false): Promise<RemoteUpdate> {
+  return request<RemoteUpdate>(
+    `/api/v1/admin/update${refresh ? '?refresh=true' : ''}`,
+  )
+}
+
 export function fetchSources(includeArchived = false): Promise<Source[]> {
   const suffix = includeArchived ? '?include_archived=true' : ''
   return request<Source[]>(`/api/v1/sources${suffix}`)

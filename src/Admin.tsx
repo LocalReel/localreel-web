@@ -9,6 +9,7 @@ import {
   deleteUser,
   describeError,
   fetchAdminHealth,
+  fetchUpdate,
   fetchCacheStats,
   fetchJobs,
   fetchMetadataStatus,
@@ -39,6 +40,7 @@ import {
   type PluginAuditEntry,
   type PluginSummary,
   type RemapReport,
+  type RemoteUpdate,
   type Role,
   type ScanRun,
   type Source,
@@ -234,6 +236,35 @@ export default function Admin() {
   useEffect(() => {
     void loadUsers()
   }, [loadUsers])
+
+  const [update, setUpdate] = useState<RemoteUpdate | null>(null)
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
+
+  const loadUpdate = useCallback(
+    async (refresh = false) => {
+      if (user.role !== 'admin') return
+      try {
+        setUpdate(await fetchUpdate(refresh))
+      } catch {
+        // The diagnostics panel already reports connectivity problems; keep
+        // whatever the card last showed.
+      }
+    },
+    [user.role],
+  )
+
+  useEffect(() => {
+    void loadUpdate()
+  }, [loadUpdate])
+
+  const checkUpdate = async () => {
+    setCheckingUpdate(true)
+    try {
+      await loadUpdate(true)
+    } finally {
+      setCheckingUpdate(false)
+    }
+  }
 
   const addFolder = async (event: FormEvent) => {
     event.preventDefault()
@@ -675,6 +706,73 @@ export default function Admin() {
 
       {health && health.ffmpeg_capability === 'probe-only' && (
         <p className="notice">{t('admin.ffmpeg.probeOnly')}</p>
+      )}
+
+      {update && (
+        <section className="panel" aria-label={t('admin.update.title')}>
+          <div className="panel-head">
+            <h2>{t('admin.update.title')}</h2>
+          </div>
+          {!update.enabled ? (
+            <p className="muted">{t('admin.update.disabled')}</p>
+          ) : (
+            <>
+              <p className="muted">
+                {t('admin.update.current', { version: update.current })}
+                {update.latest
+                  ? ` · ${t('admin.update.latest', { version: update.latest.version })}`
+                  : ''}
+              </p>
+              {update.update_available ? (
+                <p className="notice">
+                  {t('admin.update.available', {
+                    version: update.latest?.version ?? '',
+                  })}{' '}
+                  {update.latest && (
+                    <a
+                      href={update.latest.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('admin.update.open')}
+                    </a>
+                  )}
+                  {update.latest?.setup_url && (
+                    <>
+                      {' · '}
+                      <a
+                        href={update.latest.setup_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {t('admin.update.download')}
+                      </a>
+                    </>
+                  )}
+                </p>
+              ) : (
+                <p className="muted">{t('admin.update.upToDate')}</p>
+              )}
+              {update.error && (
+                <p className="notice error">
+                  {t('admin.update.error', { error: update.error })}
+                </p>
+              )}
+              <div className="actions">
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() => void checkUpdate()}
+                  disabled={checkingUpdate}
+                >
+                  {checkingUpdate
+                    ? t('admin.update.checking')
+                    : t('admin.update.check')}
+                </button>
+              </div>
+            </>
+          )}
+        </section>
       )}
 
       <section className="panel">

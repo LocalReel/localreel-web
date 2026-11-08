@@ -308,6 +308,17 @@ const en = {
     'ffprobe only: scanning and cataloguing work, but thumbnails, transcoding and HLS are disabled. Add ffmpeg.exe next to ffprobe.exe to enable them.',
   'admin.backup.usersCreated':
     '{count} restored account(s) have no password yet; set one in Accounts.',
+  'admin.update.title': 'Updates',
+  'admin.update.current': 'Current version {version}',
+  'admin.update.latest': 'Latest release {version}',
+  'admin.update.available': 'Version {version} is available.',
+  'admin.update.upToDate': 'This is the latest release.',
+  'admin.update.open': 'Release page',
+  'admin.update.download': 'Download installer',
+  'admin.update.check': 'Check for updates',
+  'admin.update.checking': 'Checking…',
+  'admin.update.error': 'Could not check the release feed: {error}',
+  'admin.update.disabled': 'Update checks are off ([update] check = false).',
 } as const
 
 export type TranslationKey = keyof typeof en
@@ -598,6 +609,17 @@ const zh: Record<TranslationKey, string> = {
     '没有找到 ffmpeg：元数据、缩略图与转码不可用。请安装 ffmpeg、放到程序旁边的 ffmpeg/bin，或设置 LOCALREEL_FFMPEG。',
   'admin.ffmpeg.probeOnly':
     '只有 ffprobe：扫描与入库可用，但缩略图、转码与 HLS 暂不可用。把 ffmpeg.exe 放到 ffprobe.exe 旁边即可启用。',
+  'admin.update.title': '更新',
+  'admin.update.current': '当前版本 {version}',
+  'admin.update.latest': '最新版本 {version}',
+  'admin.update.available': '有新版本 {version} 可用。',
+  'admin.update.upToDate': '已是最新版本。',
+  'admin.update.open': '发布页',
+  'admin.update.download': '下载安装包',
+  'admin.update.check': '检查更新',
+  'admin.update.checking': '检查中…',
+  'admin.update.error': '检查失败：{error}',
+  'admin.update.disabled': '已关闭更新检查（[update] check = false）。',
   'admin.backup.usersCreated':
     '恢复了 {count} 个账户，它们还没有密码，请在「账户」里设置。',
 }
