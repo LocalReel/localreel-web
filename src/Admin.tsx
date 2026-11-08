@@ -14,16 +14,19 @@ import {
   fetchJobs,
   fetchMetadataStatus,
   fetchPluginAudit,
+  fetchPluginCapabilities,
   fetchPluginLogs,
   fetchPlugins,
   fetchScanRuns,
   fetchSources,
   fetchUsers,
+  grantPluginCapability,
   importBackup,
   matchMetadata,
   remapSource,
   restartPlugin,
   restoreBackup,
+  revokePluginCapability,
   runCacheGc,
   setSourceArchived,
   setSourceEnabled,
@@ -38,7 +41,10 @@ import {
   type JobRecord,
   type MetadataStatus,
   type PluginAuditEntry,
+  type PluginCapabilities,
   type PluginSummary,
+  type RequestedCapability,
+  type CapabilityGrant,
   type RemapReport,
   type RemoteUpdate,
   type Role,
@@ -102,6 +108,9 @@ export default function Admin() {
   const [cache, setCache] = useState<CacheStats | null>(null)
   const [plugins, setPlugins] = useState<PluginSummary[]>([])
   const [pluginAudit, setPluginAudit] = useState<PluginAuditEntry[]>([])
+  const [pluginCaps, setPluginCaps] = useState<PluginCapabilities | null>(null)
+  const [capabilityBusy, setCapabilityBusy] = useState<string | null>(null)
+  const [capabilityError, setCapabilityError] = useState<string | null>(null)
   const [metadata, setMetadata] = useState<MetadataStatus | null>(null)
   const [matchingMetadata, setMatchingMetadata] = useState(false)
   const [metadataMatched, setMetadataMatched] = useState<{
@@ -507,6 +516,52 @@ export default function Admin() {
       fail(cause)
     } finally {
       setPluginBusy(null)
+    }
+  }
+
+  const showCapabilities = async (plugin: PluginSummary) => {
+    setCapabilityBusy(plugin.id)
+    setCapabilityError(null)
+    try {
+      setPluginCaps(await fetchPluginCapabilities(plugin.id))
+    } catch (cause) {
+      const parts = describeError(cause)
+      setCapabilityError(parts.message)
+      setPluginCaps(null)
+    } finally {
+      setCapabilityBusy(null)
+    }
+  }
+
+  const grantCapability = async (request: RequestedCapability) => {
+    if (!pluginCaps) return
+    setCapabilityBusy(`${pluginCaps.plugin_id}:${request.name}`)
+    setCapabilityError(null)
+    try {
+      await grantPluginCapability(pluginCaps.plugin_id, request.name, request.scope)
+      setPluginCaps(await fetchPluginCapabilities(pluginCaps.plugin_id))
+      await load()
+    } catch (cause) {
+      const parts = describeError(cause)
+      setCapabilityError(parts.message)
+    } finally {
+      setCapabilityBusy(null)
+    }
+  }
+
+  const revokeCapability = async (grant: CapabilityGrant) => {
+    if (!pluginCaps) return
+    setCapabilityBusy(`${pluginCaps.plugin_id}:${grant.capability}`)
+    setCapabilityError(null)
+    try {
+      await revokePluginCapability(pluginCaps.plugin_id, grant.capability)
+      setPluginCaps(await fetchPluginCapabilities(pluginCaps.plugin_id))
+      await load()
+    } catch (cause) {
+      const parts = describeError(cause)
+      setCapabilityError(parts.message)
+    } finally {
+      setCapabilityBusy(null)
     }
   }
 
@@ -1398,11 +1453,121 @@ export default function Admin() {
                     >
                       {t('admin.plugins.logs')}
                     </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={capabilityBusy === plugin.id}
+                      onClick={() => void showCapabilities(plugin)}
+                    >
+                      {t('admin.plugins.capabilities')}
+                    </button>
                   </div>
                   {pluginLog?.id === plugin.id && (
                     <pre className="plugin-log mono">
                       {pluginLog.text.trim() || t('admin.plugins.logs.empty')}
                     </pre>
+                  )}
+                  {pluginCaps?.plugin_id === plugin.id && (
+                    <div className="capability-panel">
+                      <h3>{t('admin.plugins.capabilities.title')}</h3>
+                      <p className="muted">{t('admin.plugins.capabilities.help')}</p>
+                      <p className="muted capability-phase">
+                        {t('admin.plugins.capabilities.phase1')}
+                      </p>
+                      {capabilityError && <p className="notice error">{capabilityError}</p>}
+                      <h4>{t('admin.plugins.capabilities.requested')}</h4>
+                      {pluginCaps.requested.length === 0 ? (
+                        <p className="muted">{t('admin.plugins.capabilities.none')}</p>
+                      ) : (
+                        <ul className="capability-list">
+                          {pluginCaps.requested.map(request => {
+                            const active = pluginCaps.granted.find(
+                              grant =>
+                                grant.capability === request.name && !grant.revoked_at,
+                            )
+                            const busy =
+                              capabilityBusy ===
+                              `${pluginCaps.plugin_id}:${request.name}`
+                            return (
+                              <li key={request.name}>
+                                <div className="capability-head">
+                                  <strong className="mono">{request.name}</strong>
+                                  <span className="tag">
+                                    {t('admin.plugins.capabilities.tier', {
+                                      tier: request.tier,
+                                    })}
+                                  </span>
+                                  <span className="tag">{request.source}</span>
+                                  {active && (
+                                    <span className="tag active">
+                                      {t('admin.plugins.capabilities.granted.tag')}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="muted">{request.description}</p>
+                                <code className="capability-scope">
+                                  {JSON.stringify(request.scope)}
+                                </code>
+                                {request.source === 'legacy' ? (
+                                  <p className="muted">
+                                    {t('admin.plugins.capabilities.legacy')}
+                                  </p>
+                                ) : (
+                                  !active && (
+                                    <button
+                                      type="button"
+                                      className="secondary"
+                                      disabled={busy}
+                                      onClick={() => void grantCapability(request)}
+                                    >
+                                      {t('admin.plugins.capabilities.grant')}
+                                    </button>
+                                  )
+                                )}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
+                      <h4>{t('admin.plugins.capabilities.granted')}</h4>
+                      {pluginCaps.granted.filter(grant => !grant.revoked_at).length === 0 ? (
+                        <p className="muted">{t('admin.plugins.capabilities.none')}</p>
+                      ) : (
+                        <ul className="capability-list">
+                          {pluginCaps.granted
+                            .filter(grant => !grant.revoked_at)
+                            .map(grant => {
+                              const busy =
+                                capabilityBusy ===
+                                `${pluginCaps.plugin_id}:${grant.capability}`
+                              return (
+                                <li key={grant.id}>
+                                  <div className="capability-head">
+                                    <strong className="mono">{grant.capability}</strong>
+                                    <span className="tag">
+                                      {t('admin.plugins.capabilities.tier', {
+                                        tier: grant.tier,
+                                      })}
+                                    </span>
+                                    <span className="tag">v{grant.plugin_version}</span>
+                                  </div>
+                                  <code className="capability-scope">
+                                    {JSON.stringify(grant.scope)}
+                                  </code>
+                                  <button
+                                    type="button"
+                                    className="ghost danger"
+                                    disabled={busy}
+                                    onClick={() => void revokeCapability(grant)}
+                                  >
+                                    {t('admin.plugins.capabilities.revoke')}
+                                  </button>
+                                </li>
+                              )
+                            })}
+                        </ul>
+                      )}
+                    </div>
                   )}
                 </li>
               ))}

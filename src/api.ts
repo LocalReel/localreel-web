@@ -603,6 +603,58 @@ export interface PluginAuditEntry {
   action: string
   detail: string | null
   at: number
+  capability?: string | null
+  scope_digest?: string | null
+  result?: string | null
+  bytes_in?: number | null
+  bytes_out?: number | null
+  duration_ms?: number | null
+  request_id?: string | null
+  job_id?: string | null
+  user_id?: number | null
+}
+
+export interface RequestedCapability {
+  name: string
+  scope: unknown
+  tier: number
+  /** `manifest` for a declaration, `legacy` for an old permission mapping. */
+  source: string
+  title: string
+  description: string
+  audit: string
+}
+
+export interface CapabilityGrant {
+  id: number
+  plugin_id: string
+  plugin_version: string
+  capability: string
+  scope: unknown
+  scope_digest: string
+  tier: number
+  granted_by: number | null
+  granted_at: number
+  expires_at: number | null
+  revoked_at: number | null
+}
+
+export interface CapabilityCatalogEntry {
+  name: string
+  tier: number
+  title: string
+  description: string
+  audit: string
+}
+
+export interface PluginCapabilities {
+  plugin_id: string
+  name: string
+  version: string
+  requested: RequestedCapability[]
+  granted: CapabilityGrant[]
+  catalog: CapabilityCatalogEntry[]
+  forbidden: string[]
 }
 
 export function fetchPlugins(): Promise<{ plugins: PluginSummary[] }> {
@@ -650,6 +702,38 @@ export function fetchPluginLogs(
 ): Promise<{ id: string; log: string }> {
   return request<{ id: string; log: string }>(
     `/api/v1/plugins/${encodeURIComponent(id)}/logs?bytes=${bytes}`,
+  )
+}
+
+/** What a plugin requests, what the host granted, and the host's risk text. */
+export function fetchPluginCapabilities(id: string): Promise<PluginCapabilities> {
+  return request<PluginCapabilities>(
+    `/api/v1/plugins/${encodeURIComponent(id)}/capabilities`,
+  )
+}
+
+export function grantPluginCapability(
+  id: string,
+  capability: string,
+  scope: unknown,
+): Promise<CapabilityGrant> {
+  return request<CapabilityGrant>(
+    `/api/v1/plugins/${encodeURIComponent(id)}/capabilities`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ capability, scope }),
+    },
+  )
+}
+
+export function revokePluginCapability(
+  id: string,
+  capability: string,
+): Promise<{ ok: boolean; plugin: string; capability: string; revoked: boolean }> {
+  return request(
+    `/api/v1/plugins/${encodeURIComponent(id)}/capabilities/${encodeURIComponent(capability)}`,
+    { method: 'DELETE' },
   )
 }
 

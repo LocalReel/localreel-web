@@ -223,6 +223,21 @@ const en = {
   'admin.plugins.disable': 'Disable',
   'admin.plugins.logs': 'Logs',
   'admin.plugins.logs.empty': 'No output yet.',
+  'admin.plugins.capabilities': 'Capabilities',
+  'admin.plugins.capabilities.title': 'Capabilities',
+  'admin.plugins.capabilities.help':
+    'The plugin requests these capabilities; the host owns the descriptions and risk tiers. A grant is recorded for this plugin version and can be revoked without a restart.',
+  'admin.plugins.capabilities.phase1':
+    'Phase 1 records disclosures and grants. A broker that enforces calls at runtime is the next phase.',
+  'admin.plugins.capabilities.requested': 'Requested by the manifest',
+  'admin.plugins.capabilities.granted': 'Granted',
+  'admin.plugins.capabilities.grant': 'Grant',
+  'admin.plugins.capabilities.revoke': 'Revoke',
+  'admin.plugins.capabilities.legacy':
+    'Legacy permission. Declare a typed capability in the manifest before it can be granted here.',
+  'admin.plugins.capabilities.none': 'Nothing here yet.',
+  'admin.plugins.capabilities.tier': 'Tier {tier}',
+  'admin.plugins.capabilities.granted.tag': 'granted',
   'admin.metadata.title': 'Metadata',
   'admin.metadata.help':
     'Posters and descriptions come from an optional provider. Set [metadata] provider and api_key in localreel.toml; nothing is fetched while the provider is "none".',
@@ -531,6 +546,21 @@ const zh: Record<TranslationKey, string> = {
   'admin.plugins.disable': '禁用',
   'admin.plugins.logs': '日志',
   'admin.plugins.logs.empty': '暂无输出。',
+  'admin.plugins.capabilities': '能力',
+  'admin.plugins.capabilities.title': '能力清单',
+  'admin.plugins.capabilities.help':
+    '插件请求这些能力；说明与风险等级由宿主提供。授予会绑定到当前插件版本，并可在不重启的情况下撤销。',
+  'admin.plugins.capabilities.phase1':
+    '第一阶段只记录披露与授予；在运行时强制拦截调用的 broker 是下一阶段。',
+  'admin.plugins.capabilities.requested': '清单请求',
+  'admin.plugins.capabilities.granted': '已授予',
+  'admin.plugins.capabilities.grant': '授予',
+  'admin.plugins.capabilities.revoke': '撤销',
+  'admin.plugins.capabilities.legacy':
+    '旧权限。需要在清单中声明带 scope 的新能力后才能在这里授予。',
+  'admin.plugins.capabilities.none': '暂无。',
+  'admin.plugins.capabilities.tier': '等级 {tier}',
+  'admin.plugins.capabilities.granted.tag': '已授予',
   'admin.metadata.title': '元数据',
   'admin.metadata.help':
     '海报与简介来自可选的元数据源。请在 localreel.toml 里设置 [metadata] provider 与 api_key；provider 为 "none" 时不会联网抓取。',
