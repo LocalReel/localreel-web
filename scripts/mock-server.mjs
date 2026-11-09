@@ -206,6 +206,30 @@ export async function startMockServer() {
         sendJson(response, 200, { deleted: true })
         return
       }
+      if (url.pathname === '/api/v1/plugins/audit') {
+        sendJson(response, 200, {
+          entries: [
+            {
+              id: 1,
+              plugin_id: 'demo-storage',
+              permission: null,
+              action: 'package.install',
+              detail: 'version=0.2.0 signature_verified=true',
+              at: 0,
+              capability: null,
+              scope_digest: null,
+              result: 'installed',
+              bytes_in: null,
+              bytes_out: null,
+              duration_ms: null,
+              request_id: null,
+              job_id: null,
+              user_id: 1,
+            },
+          ],
+        })
+        return
+      }
       if (url.pathname === '/api/v1/feed') {
         sendJson(response, 200, {
           items: [

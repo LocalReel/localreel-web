@@ -118,6 +118,8 @@ try {
     'Signed by host',
     'Staged packages',
     'Install',
+    'Package activity',
+    'package.install',
   ]
   const deadline = Date.now() + 20000
   let text = ''
@@ -175,6 +177,7 @@ try {
     '/api/v1/plugins/sandbox-status',
     '/api/v1/plugins/verifications/verify',
     '/api/v1/plugins/packages',
+    '/api/v1/plugins/audit',
   ]
   const missingRequests = requested.filter(
     path => !mock.requests.some(entry => entry.method === 'GET' && entry.path === path),

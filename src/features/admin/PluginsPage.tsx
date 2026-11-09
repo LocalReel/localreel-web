@@ -4,6 +4,7 @@ import { routeHref } from '../../app/match'
 import { Link } from '../../app/router'
 import {
   deleteStagedPackage,
+  fetchAudit,
   fetchPlugins,
   fetchSandboxStatus,
   fetchStagedPackages,
@@ -41,6 +42,9 @@ export function PluginsPage() {
   })
   const chain = useQuery('plugins:chain', verifyVerificationChain, { staleTime: 15_000 })
   const staged = useQuery('plugins:staged', fetchStagedPackages, { staleTime: 15_000 })
+  const audit = useQuery('plugins:package-audit', () => fetchAudit(undefined, 50), {
+    staleTime: 15_000,
+  })
   const [installNotice, setInstallNotice] = useState<string | null>(null)
   const action = useAction()
 
@@ -90,6 +94,9 @@ export function PluginsPage() {
   }
 
   const rows = plugins.data ?? []
+  const packageAuditRows = (audit.data ?? [])
+    .filter(entry => entry.action.startsWith('package.'))
+    .slice(0, 10)
   const sandboxReady =
     sandbox.data?.app_container === true &&
     (sandbox.data.platform === 'linux'
@@ -343,6 +350,32 @@ export function PluginsPage() {
                 </div>
               )
             })}
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        title={t('plugins.packageAudit.title')}
+        note={t('plugins.packageAudit.note')}
+      >
+        {packageAuditRows.length === 0 ? (
+          <Empty
+            title={t('plugins.packageAudit.empty')}
+            body={t('plugins.packageAudit.emptyBody')}
+          />
+        ) : (
+          <div className={styles.stack}>
+            {packageAuditRows.map(entry => (
+              <div key={entry.id} className={styles.cardMeta}>
+                <span>
+                  <strong>{entry.action}</strong> {entry.plugin_id}
+                </span>
+                <Badge tone={entry.result === 'rejected' ? 'warning' : 'success'}>
+                  {entry.result ?? t('common.none')}
+                </Badge>
+                {entry.detail ? <span className={styles.muted}>{entry.detail}</span> : null}
+              </div>
+            ))}
           </div>
         )}
       </Panel>
