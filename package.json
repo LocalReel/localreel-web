@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test src/app/match.test.ts src/data/cache.test.ts src/i18n/i18n.test.ts src/lib/feed.test.ts src/lib/format.test.ts src/lib/preview.test.ts src/lib/resume.test.ts src/lib/text.test.ts",
     "test:browser": "node scripts/browser-resume-mock.mjs",
+    "test:admin": "node scripts/browser-admin-mock.mjs",
     "test:hls": "node scripts/browser-hls-test.mjs"
   },
   "dependencies": {

@@ -112,6 +112,65 @@ export async function startMockServer() {
         })
         return
       }
+      if (url.pathname === '/api/v1/plugins') {
+        sendJson(response, 200, {
+          plugins: [
+            {
+              id: 'demo-storage',
+              name: 'Demo storage',
+              version: '0.1.0',
+              permissions: ['fs.read'],
+              network: false,
+              running: true,
+              state: 'running',
+              enabled: true,
+              restarts: 0,
+              generation: 1,
+              package: 'demo-storage-0.1.0.lrplug',
+              transport: 'stdio',
+              sandbox: 'appcontainer',
+            },
+          ],
+        })
+        return
+      }
+      if (url.pathname === '/api/v1/plugins/sandbox-status') {
+        sendJson(response, 200, {
+          platform: process.platform === 'win32' ? 'windows' : process.platform,
+          app_container: true,
+          wrapper_present: true,
+          unshare_present: false,
+        })
+        return
+      }
+      if (url.pathname === '/api/v1/plugins/verifications') {
+        sendJson(response, 200, {
+          entries: [
+            {
+              id: 2,
+              plugin_id: 'demo-storage',
+              plugin_version: '0.1.0',
+              package_sha256: 'a'.repeat(64),
+              publisher: 'acme',
+              public_key_fingerprint: 'b'.repeat(64),
+              signature_verified: true,
+              at: 0,
+              chain_hash: 'c'.repeat(64),
+            },
+          ],
+        })
+        return
+      }
+      if (url.pathname === '/api/v1/plugins/verifications/verify') {
+        sendJson(response, 200, {
+          checked: 1,
+          valid: true,
+          broken_at: null,
+          anchored: true,
+          anchor_valid: true,
+        })
+        return
+      }
       if (url.pathname === '/api/v1/feed') {
         sendJson(response, 200, {
           items: [
