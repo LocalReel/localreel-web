@@ -512,6 +512,8 @@ export const zh: Record<TranslationKey, string> = {
   'settings.language': '语言',
   'settings.language.body': '每个页面都提供英文与简体中文。',
   'settings.reset': '恢复默认',
+  'settings.danger': '危险区',
+  'settings.danger.body': '这里的操作会让所有正在使用的人断开连接。',
   'settings.about': '关于这个安装',
   'settings.about.body': '服务器报告的只读信息。',
 

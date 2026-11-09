@@ -8,7 +8,6 @@ import {
   fetchMetadataStatus,
   fetchUpdateStatus,
   matchMetadata,
-  shutdown,
   startUpdateDownload,
 } from '../../data/client'
 import { useInterval, useQuery } from '../../data/hooks'
@@ -17,7 +16,7 @@ import { useT, type TranslationKey } from '../../i18n'
 import { formatBytes, formatDateTime, formatNumber, formatSpan } from '../../lib/format'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
-import { useConfirm, useToast } from '../../ui/Feedback'
+import { useToast } from '../../ui/Feedback'
 import { Icon } from '../../ui/Icons'
 import { Panel } from '../../ui/Panel'
 import { Progress } from '../../ui/Progress'
@@ -45,10 +44,8 @@ export function OverviewPage() {
   const t = useT()
   const { settings } = useSettings()
   const lang = settings.lang
-  const confirm = useConfirm()
   const toast = useToast()
 
-  const [stopped, setStopped] = useState(false)
   const [checking, setChecking] = useState(false)
   const [checkError, setCheckError] = useState<unknown>(null)
   const [liveDownload, setLiveDownload] = useState<UpdateDownload | null>(null)
@@ -63,7 +60,6 @@ export function OverviewPage() {
   const metadata = useQuery('admin:metadata', fetchMetadataStatus, { staleTime: 60_000 })
 
   const match = useAction()
-  const stop = useAction()
   const installer = useAction()
 
   // The download phase is the one value a write or a poll can move forward
@@ -85,7 +81,7 @@ export function OverviewPage() {
 
   // Poll only while this page is mounted and only until the server is asked to
   // stop; afterwards every request is expected to fail.
-  useInterval(() => health.reload(), stopped ? null : 5_000)
+  useInterval(() => health.reload(), 5_000)
 
   // The updater runs in the background, so the card watches it once a second
   // and stops the moment it reaches a phase where more polling would be noise.
@@ -154,21 +150,6 @@ export function OverviewPage() {
       },
       () => metadata.reload(),
     )
-  }
-
-  const shutdownServer = async () => {
-    const ok = await confirm({
-      title: t('overview.shutdown.confirm'),
-      body: t('overview.shutdown.body'),
-      confirmLabel: t('overview.shutdown.action'),
-      cancelLabel: t('common.cancel'),
-      danger: true,
-    })
-    if (!ok) return
-    await stop.run('shutdown', async () => {
-      await shutdown()
-      setStopped(true)
-    })
   }
 
   const data = health.data
@@ -548,27 +529,6 @@ export function OverviewPage() {
           <PathList health={data} />
         ) : (
           <p className={styles.muted}>{t('common.loading')}</p>
-        )}
-      </Panel>
-
-      <Panel title={t('overview.shutdown')}>
-        {stop.error ? <Notice error={stop.error} onDismiss={stop.reset} /> : null}
-        {stopped ? (
-          <p className={styles.ok}>{t('overview.shutdown.done')}</p>
-        ) : (
-          <>
-            <p className={styles.muted}>{t('overview.shutdown.body')}</p>
-            <div className={styles.formFoot}>
-              <Button
-                variant="danger"
-                icon="alert"
-                loading={stop.pending === 'shutdown'}
-                onClick={() => void shutdownServer()}
-              >
-                {t('overview.shutdown.action')}
-              </Button>
-            </div>
-          </>
         )}
       </Panel>
     </div>

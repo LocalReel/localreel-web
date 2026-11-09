@@ -524,6 +524,8 @@ export const en = {
   'settings.language': 'Language',
   'settings.language.body': 'Every page ships in English and Simplified Chinese.',
   'settings.reset': 'Reset to defaults',
+  'settings.danger': 'Danger zone',
+  'settings.danger.body': 'Actions here stop the program for everyone using it.',
   'settings.about': 'About this install',
   'settings.about.body': 'Read-only facts reported by the server.',
 

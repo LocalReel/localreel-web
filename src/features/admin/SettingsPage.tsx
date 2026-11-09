@@ -1,11 +1,14 @@
+import { useState } from 'react'
+
 import { useSettings } from '../../app/settings'
-import { fetchAdminHealth } from '../../data/client'
+import { fetchAdminHealth, shutdown } from '../../data/client'
 import { useQuery } from '../../data/hooks'
 import { useT } from '../../i18n'
 import { Button } from '../../ui/Button'
+import { useConfirm } from '../../ui/Feedback'
 import { Panel } from '../../ui/Panel'
 import { LoadingRow } from '../../ui/Spinner'
-import { ChoiceGroup, FactList, Notice, PathList } from './shared'
+import { ChoiceGroup, FactList, Notice, PathList, useAction } from './shared'
 import styles from './Admin.module.css'
 
 /**
@@ -17,6 +20,24 @@ export function SettingsPage() {
   const t = useT()
   const { settings, update, reset } = useSettings()
   const health = useQuery('admin:health', fetchAdminHealth, { staleTime: 15_000 })
+  const confirm = useConfirm()
+  const stop = useAction()
+  const [stopped, setStopped] = useState(false)
+
+  const shutdownServer = async () => {
+    const ok = await confirm({
+      title: t('overview.shutdown.confirm'),
+      body: t('overview.shutdown.body'),
+      confirmLabel: t('overview.shutdown.action'),
+      cancelLabel: t('common.cancel'),
+      danger: true,
+    })
+    if (!ok) return
+    await stop.run('shutdown', async () => {
+      await shutdown()
+      setStopped(true)
+    })
+  }
 
   return (
     <div className={styles.stack}>
@@ -100,6 +121,24 @@ export function SettingsPage() {
         ) : health.loading ? (
           <LoadingRow>{t('common.loading')}</LoadingRow>
         ) : null}
+      </Panel>
+
+      <Panel title={t('settings.danger')} note={t('settings.danger.body')}>
+        {stop.error ? <Notice error={stop.error} onDismiss={stop.reset} /> : null}
+        {stopped ? (
+          <p className={styles.ok}>{t('overview.shutdown.done')}</p>
+        ) : (
+          <div className={styles.formFoot}>
+            <Button
+              variant="danger"
+              icon="alert"
+              loading={stop.pending === 'shutdown'}
+              onClick={() => void shutdownServer()}
+            >
+              {t('overview.shutdown.action')}
+            </Button>
+          </div>
+        )}
       </Panel>
     </div>
   )
