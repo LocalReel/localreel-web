@@ -544,6 +544,7 @@ export const en = {
   'share.dialog.revoke': 'Revoke',
   'share.dialog.inactive': 'No longer works',
   'share.gone': 'This link is no longer available.',
+  'share.download': 'Download',
   'share.error': 'This link could not be loaded.',
   'share.expires': 'Expires {date}',
   'share.footer': 'Shared from a LocalReel library.',

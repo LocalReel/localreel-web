@@ -531,6 +531,7 @@ export const zh: Record<TranslationKey, string> = {
   'share.dialog.revoke': '撤销',
   'share.dialog.inactive': '已失效',
   'share.gone': '这个链接已失效。',
+  'share.download': '下载',
   'share.error': '无法加载这个链接。',
   'share.expires': '{date} 到期',
   'share.footer': '来自一个 LocalReel 媒体库的分享。',

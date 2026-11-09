@@ -59,6 +59,24 @@
   font-size: var(--text-xs);
 }
 
+.download {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-self: start;
+  margin-top: var(--space-2);
+  padding: 0.3rem 0.7rem;
+  border: var(--line-hair) solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.download:hover {
+  color: var(--fg);
+  border-color: var(--fg-faint);
+}
+
 .center {
   display: grid;
   min-height: 12rem;

@@ -16,6 +16,8 @@ export interface PublicShare {
   allow_download: boolean
   expires_at: number | null
   stream: string
+  /** Present only when the link allows saving the file. */
+  download: string | null
 }
 
 /**
@@ -99,6 +101,12 @@ export function PublicSharePage({ token }: { token: string }) {
                   ? ` · ${t('share.expires', { date: new Date(state.share.expires_at * 1000).toLocaleDateString() })}`
                   : null}
               </p>
+              {state.share.download ? (
+                <a className={styles.download} href={state.share.download}>
+                  <Icon name="download" size={14} />
+                  {t('share.download')}
+                </a>
+              ) : null}
             </div>
           </>
         )}
