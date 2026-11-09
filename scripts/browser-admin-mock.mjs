@@ -134,6 +134,42 @@ try {
   if (missing.length > 0) {
     throw new Error(`admin page is missing ${JSON.stringify(missing)}\nbody:\n${text.slice(0, 2000)}`)
   }
+
+  const evaluate = async expression => {
+    const result = await send('Runtime.evaluate', { expression, returnByValue: true })
+    return result.result?.value
+  }
+  const clickButton = label =>
+    evaluate(
+      `(() => {
+        const button = [...document.querySelectorAll('button')].find(
+          item => item.textContent.trim() === ${JSON.stringify(label)},
+        )
+        if (!button || button.disabled) return false
+        button.click()
+        return true
+      })()`,
+    )
+  const waitForText = async needle => {
+    const until = Date.now() + 10000
+    while (Date.now() < until) {
+      const body = await evaluate('document.body.innerText')
+      if (typeof body === 'string' && body.includes(needle)) return
+      await sleep(200)
+    }
+    throw new Error(`admin page never showed ${JSON.stringify(needle)}`)
+  }
+
+  await evaluate('window.confirm = () => true')
+  if (!(await clickButton('Install'))) {
+    throw new Error('the Install button was missing or disabled')
+  }
+  await waitForText('restart the server to load it')
+  if (!(await clickButton('Delete'))) {
+    throw new Error('the Delete button was missing')
+  }
+  await waitForText('No staged packages')
+
   const requested = [
     '/api/v1/plugins',
     '/api/v1/plugins/sandbox-status',
@@ -145,6 +181,16 @@ try {
   )
   if (missingRequests.length > 0) {
     throw new Error(`admin page did not request ${JSON.stringify(missingRequests)}`)
+  }
+  const mutations = [
+    { method: 'POST', path: '/api/v1/plugins/packages/install' },
+    { method: 'DELETE', path: '/api/v1/plugins/packages/demo-storage/0.2.0' },
+  ]
+  const missingMutations = mutations.filter(
+    expected => !mock.requests.some(entry => entry.method === expected.method && entry.path === expected.path),
+  )
+  if (missingMutations.length > 0) {
+    throw new Error(`admin page did not send ${JSON.stringify(missingMutations)}`)
   }
   console.log(JSON.stringify({ ok: true, route: '/admin/plugins', expected, requests: mock.requests.length }))
 } finally {
