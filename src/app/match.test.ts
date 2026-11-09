@@ -18,7 +18,9 @@ test('every declared route matches its own pattern', () => {
   assert.equal(matchRoute('/reels').name, 'reels')
   assert.equal(matchRoute('/admin').name, 'admin.overview')
   assert.equal(matchRoute('/admin/sources').name, 'admin.sources')
-  assert.equal(matchRoute('/admin/plugins').name, 'admin.plugins')
+  assert.equal(matchRoute('/plugins').name, 'plugins')
+  // The console host moved out of the admin tree; the app redirects the old path.
+  assert.equal(matchRoute('/admin/plugins').name, 'notfound')
   assert.equal(matchRoute('/admin/settings').name, 'admin.settings')
 })
 
@@ -49,13 +51,13 @@ test('routeHref builds and encodes paths', () => {
   assert.equal(routeHref('library'), '/library')
   assert.equal(routeHref('watch', { id: 42 }), '/watch/42')
   assert.equal(routeHref('show', { id: 'a b' }), '/show/a%20b')
-  assert.equal(routeHref('admin.plugins'), '/admin/plugins')
+  assert.equal(routeHref('plugins'), '/plugins')
 })
 
 test('the plugin detail page keeps the plugins entry active', () => {
-  const detail = matchRoute('/admin/plugins/demo')
-  assert.equal(detail.name, 'admin.plugin')
-  assert.equal(isActive(detail, 'admin.plugins'), true)
+  const detail = matchRoute('/plugins/demo')
+  assert.equal(detail.name, 'plugin')
+  assert.equal(isActive(detail, 'plugins'), true)
   assert.equal(isActive(detail, 'admin.sources'), false)
 })
 

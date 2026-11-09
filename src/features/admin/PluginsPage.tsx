@@ -23,6 +23,7 @@ import { Button } from '../../ui/Button'
 import { Empty } from '../../ui/Empty'
 import { TextField } from '../../ui/Field'
 import { Icon } from '../../ui/Icons'
+import { PageHeader } from '../../ui/PageHeader'
 import { Panel } from '../../ui/Panel'
 import { LoadingRow } from '../../ui/Spinner'
 import { Notice, PLUGIN_STATE_KEY, PLUGIN_STATE_TONE, buttonClass, useAction } from './shared'
@@ -150,12 +151,17 @@ export function PluginsPage() {
         : false)
 
   return (
-    <div className={styles.stack}>
-      {action.error ? <Notice error={action.error} onDismiss={action.reset} /> : null}
-
-      <Panel
+    <>
+      <PageHeader
+        kicker={t('home.kicker')}
         title={t('plugins.title')}
         note={t('plugins.subtitle')}
+      />
+      <div className={styles.stack}>
+        {action.error ? <Notice error={action.error} onDismiss={action.reset} /> : null}
+
+        <Panel
+          title={t('plugins.installed')}
         tools={
           <Button
             variant="ghost"
@@ -268,7 +274,7 @@ export function PluginsPage() {
                       : t('plugins.action.enable')}
                   </Button>
                   <Link
-                    to={routeHref('admin.plugin', { id: plugin.id })}
+                    to={routeHref('plugin', { id: plugin.id })}
                     className={buttonClass('secondary', 'sm')}
                   >
                     {t('plugins.action.open')}
@@ -451,5 +457,6 @@ export function PluginsPage() {
         )}
       </Panel>
     </div>
+    </>
   )
 }

@@ -1,9 +1,10 @@
 /**
  * Route table and matching.
  *
- * Deliberately framework-free: the server has no SPA fallback for arbitrary
- * paths yet, and the matching rules are the part most worth unit-testing, so
- * this module is pure and `router.tsx` only adds the React glue.
+ * Deliberately framework-free: the matching rules are the part most worth
+ * unit-testing, so this module is pure and `router.tsx` only adds the React
+ * glue. The server answers any unmatched HTML path with the shell, so a deep
+ * link keeps working after a reload.
  *
  * Patterns support `:param` segments only. Anything fancier (optional
  * segments, wildcards) is not needed by this app and would be dead code.
@@ -22,9 +23,9 @@ export type RouteName =
   | 'admin.scans'
   | 'admin.cache'
   | 'admin.backup'
-  | 'admin.plugins'
-  | 'admin.plugin'
   | 'admin.settings'
+  | 'plugins'
+  | 'plugin'
   | 'notfound'
 
 export interface RouteDefinition {
@@ -46,9 +47,9 @@ export const routes: RouteDefinition[] = [
   { name: 'admin.scans', pattern: '/admin/scans' },
   { name: 'admin.cache', pattern: '/admin/cache' },
   { name: 'admin.backup', pattern: '/admin/backup' },
-  { name: 'admin.plugins', pattern: '/admin/plugins' },
-  { name: 'admin.plugin', pattern: '/admin/plugins/:id' },
   { name: 'admin.settings', pattern: '/admin/settings' },
+  { name: 'plugins', pattern: '/plugins' },
+  { name: 'plugin', pattern: '/plugins/:id' },
 ]
 
 export interface RouteMatch {
@@ -152,7 +153,7 @@ export function routeHref(name: RouteName, params: Record<string, string | numbe
 export function isActive(match: RouteMatch, name: RouteName): boolean {
   if (match.name === name) return true
   // The plugin detail page keeps the plugins tab lit.
-  if (name === 'admin.plugins' && match.name === 'admin.plugin') return true
+  if (name === 'plugins' && match.name === 'plugin') return true
   return false
 }
 

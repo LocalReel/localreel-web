@@ -57,7 +57,7 @@ export function PluginDetailPage({ pluginId }: { pluginId?: string }) {
   if (!plugin) {
     return (
       <div className={styles.stack}>
-        <Link to={routeHref('admin.plugins')} className={styles.backLink}>
+        <Link to={routeHref('plugins')} className={styles.backLink}>
           <Icon name="chevron-left" size={15} />
           {t('plugins.detail.back')}
         </Link>
@@ -134,7 +134,7 @@ export function PluginDetailPage({ pluginId }: { pluginId?: string }) {
 
   return (
     <div className={styles.stack}>
-      <Link to={routeHref('admin.plugins')} className={styles.backLink}>
+      <Link to={routeHref('plugins')} className={styles.backLink}>
         <Icon name="chevron-left" size={15} />
         {t('plugins.detail.back')}
       </Link>

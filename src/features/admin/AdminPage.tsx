@@ -10,8 +10,6 @@ import { BackupPage } from './BackupPage'
 import { CachePage } from './CachePage'
 import { JobsPage } from './JobsPage'
 import { OverviewPage } from './OverviewPage'
-import { PluginDetailPage } from './PluginDetailPage'
-import { PluginsPage } from './PluginsPage'
 import { ScansPage } from './ScansPage'
 import { SettingsPage } from './SettingsPage'
 import { SourcesPage } from './SourcesPage'
@@ -23,7 +21,7 @@ import { SourcesPage } from './SourcesPage'
  * same page component while the console switches tabs, so each page is one
  * block of state rather than a long-lived app of its own.
  */
-export function AdminPage({ section, pluginId }: { section: string; pluginId?: string }) {
+export function AdminPage({ section }: { section: string }) {
   const t = useT()
   const route = useRoute()
   const { user } = useAuth()
@@ -46,12 +44,12 @@ export function AdminPage({ section, pluginId }: { section: string; pluginId?: s
         note={t('admin.subtitle')}
       />
       <AdminTabs match={route} />
-      {sectionView(section, pluginId)}
+      {sectionView(section)}
     </>
   )
 }
 
-function sectionView(section: string, pluginId?: string) {
+function sectionView(section: string) {
   switch (section) {
     case 'admin.sources':
       return <SourcesPage />
@@ -65,10 +63,6 @@ function sectionView(section: string, pluginId?: string) {
       return <CachePage />
     case 'admin.backup':
       return <BackupPage />
-    case 'admin.plugins':
-      return <PluginsPage />
-    case 'admin.plugin':
-      return <PluginDetailPage pluginId={pluginId} />
     case 'admin.settings':
       return <SettingsPage />
     default:

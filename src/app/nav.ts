@@ -15,6 +15,10 @@ export const primaryNav: NavItem[] = [
   { to: '/', route: 'home', labelKey: 'nav.home', icon: 'home' },
   { to: '/library', route: 'library', labelKey: 'nav.library', icon: 'library' },
   { to: '/reels', route: 'reels', labelKey: 'nav.reels', icon: 'reels' },
+  // The plugin module is its own destination from here on, not a console tab.
+  // It stays administrator-only until it has a viewer-facing surface; showing
+  // an entry that always answers 403 would be worse than hiding it.
+  { to: '/plugins', route: 'plugins', labelKey: 'nav.plugins', icon: 'puzzle', adminOnly: true },
   { to: '/admin', route: 'admin.overview', labelKey: 'nav.admin', icon: 'console', adminOnly: true },
 ]
 
@@ -33,6 +37,5 @@ export const adminTabs: AdminTab[] = [
   { to: '/admin/scans', route: 'admin.scans', labelKey: 'admin.tab.scans', icon: 'list' },
   { to: '/admin/cache', route: 'admin.cache', labelKey: 'admin.tab.cache', icon: 'database' },
   { to: '/admin/backup', route: 'admin.backup', labelKey: 'admin.tab.backup', icon: 'layers' },
-  { to: '/admin/plugins', route: 'admin.plugins', labelKey: 'admin.tab.plugins', icon: 'puzzle' },
   { to: '/admin/settings', route: 'admin.settings', labelKey: 'admin.tab.settings', icon: 'settings' },
 ]

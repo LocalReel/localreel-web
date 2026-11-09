@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { AdminPage } from '../features/admin/AdminPage'
+import { PluginDetailPage } from '../features/admin/PluginDetailPage'
+import { PluginsPage } from '../features/admin/PluginsPage'
 import { HomePage } from '../features/home/HomePage'
 import { LibraryPage } from '../features/library/LibraryPage'
 import { NotFound } from '../features/notfound/NotFound'
@@ -29,6 +31,14 @@ export default function App() {
     if (route.name === 'notfound' && route.path === '/watch') navigate('/reels', { replace: true })
   }, [route.name, route.path])
 
+  // Plugins left the console and got their own rail destination. Old links
+  // keep working, including a detail id.
+  useEffect(() => {
+    if (route.name !== 'notfound') return
+    if (route.path !== '/admin/plugins' && !route.path.startsWith('/admin/plugins/')) return
+    navigate(route.path.replace('/admin/plugins', '/plugins'), { replace: true })
+  }, [route.name, route.path])
+
   if (route.name === 'watch') return <WatchPage id={route.params.id} />
   if (route.name === 'reels') return <ReelsPage />
 
@@ -54,13 +64,24 @@ function render(name: string, params: Record<string, string>) {
     case 'admin.scans':
     case 'admin.cache':
     case 'admin.backup':
-    case 'admin.plugins':
-    case 'admin.plugin':
     case 'admin.settings':
-      return <AdminPage section={name} pluginId={params.id} />
+      return <AdminPage section={name} />
+    case 'plugins':
+    case 'plugin':
+      return <PluginsRoute name={name} id={params.id} />
     default:
       return <NotFound />
   }
+}
+
+/**
+ * The plugin module lives outside the console from 0.5.7 on: it has its own
+ * destination in the rail, so it owns the whole content column instead of
+ * sitting under the console's sub-navigation.
+ */
+function PluginsRoute({ name, id }: { name: string; id?: string }) {
+  if (name === 'plugin') return <PluginDetailPage pluginId={id ?? ''} />
+  return <PluginsPage />
 }
 
 /**

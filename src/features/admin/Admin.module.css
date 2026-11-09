@@ -18,6 +18,13 @@
   gap: var(--space-6);
 }
 
+/* A grid item defaults to `min-width: auto`, so one wide child (a path, a
+   table, a chip row) can push the whole column past the viewport. */
+.stack > *,
+.cards > * {
+  min-width: 0;
+}
+
 .stackTight {
   display: grid;
   gap: var(--space-4);
@@ -402,6 +409,7 @@
 .card {
   display: grid;
   gap: var(--space-3);
+  min-width: 0;
   padding: var(--space-5);
   border: var(--line-hair) solid var(--line);
   border-radius: var(--radius-md);
@@ -774,5 +782,13 @@
   gap: var(--space-3);
   align-items: end;
   margin-bottom: var(--space-4);
+}
+
+/* The three fixed minimums above add up to more than a phone is wide, and a
+   grid track never shrinks below its items' minimums. Stack it instead. */
+@media (max-width: 48rem) {
+  .uploadForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
