@@ -32,7 +32,9 @@ import type {
   MetadataStatus,
   Playback,
   PluginDescriptor,
+  PackageVerification,
   SandboxStatus,
+  VerificationChain,
   RemapReport,
   Role,
   ScanIssue,
@@ -484,6 +486,17 @@ export async function fetchPlugins(): Promise<PluginDescriptor[]> {
 
 export function fetchSandboxStatus(): Promise<SandboxStatus> {
   return request<SandboxStatus>('/api/v1/plugins/sandbox-status')
+}
+
+export async function fetchVerifications(limit = 20): Promise<PackageVerification[]> {
+  const body = await request<{ entries: PackageVerification[] }>(
+    `/api/v1/plugins/verifications?limit=${limit}`,
+  )
+  return body.entries
+}
+
+export function verifyVerificationChain(): Promise<VerificationChain> {
+  return request<VerificationChain>('/api/v1/plugins/verifications/verify')
 }
 
 export function fetchCapabilities(id: string): Promise<CapabilityReport> {

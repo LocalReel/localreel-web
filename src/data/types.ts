@@ -346,6 +346,26 @@ export interface SandboxStatus {
   unshare_present: boolean
 }
 
+export interface PackageVerification {
+  id: number
+  plugin_id: string
+  plugin_version: string
+  package_sha256: string
+  publisher?: string
+  public_key_fingerprint?: string
+  signature_verified: boolean
+  at: number
+  chain_hash?: string
+}
+
+export interface VerificationChain {
+  checked: number
+  valid: boolean
+  broken_at: number | null
+  anchored: boolean
+  anchor_valid: boolean | null
+}
+
 export interface RequestedCapability {
   name: string
   scope: unknown

@@ -1,6 +1,13 @@
 import { routeHref } from '../../app/match'
 import { Link } from '../../app/router'
-import { fetchPlugins, fetchSandboxStatus, restartPlugin, setPluginEnabled } from '../../data/client'
+import {
+  fetchPlugins,
+  fetchSandboxStatus,
+  fetchVerifications,
+  restartPlugin,
+  setPluginEnabled,
+  verifyVerificationChain,
+} from '../../data/client'
 import { useQuery } from '../../data/hooks'
 import type { PluginDescriptor } from '../../data/types'
 import { useT } from '../../i18n'
@@ -24,6 +31,10 @@ export function PluginsPage() {
   const t = useT()
   const plugins = useQuery('plugins', fetchPlugins, { staleTime: 15_000 })
   const sandbox = useQuery('plugins:sandbox', fetchSandboxStatus, { staleTime: 60_000 })
+  const verifications = useQuery('plugins:verifications', () => fetchVerifications(10), {
+    staleTime: 15_000,
+  })
+  const chain = useQuery('plugins:chain', verifyVerificationChain, { staleTime: 15_000 })
   const action = useAction()
 
   const toggle = (plugin: PluginDescriptor) => {
@@ -178,6 +189,56 @@ export function PluginsPage() {
                   </Link>
                 </div>
               </article>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title={t('plugins.verifications.title')} note={t('plugins.verifications.note')}>
+        {chain.data ? (
+          <div className={styles.cardMeta}>
+            <Badge tone={chain.data.valid ? 'success' : 'danger'}>
+              {chain.data.valid
+                ? t('plugins.verifications.valid')
+                : t('plugins.verifications.broken', {
+                    id: chain.data.broken_at ?? '',
+                  })}
+            </Badge>
+            <Badge
+              tone={
+                chain.data.anchor_valid === true
+                  ? 'success'
+                  : chain.data.anchored
+                    ? 'warning'
+                    : 'outline'
+              }
+            >
+              {!chain.data.anchored
+                ? t('plugins.verifications.notAnchored')
+                : chain.data.anchor_valid
+                  ? t('plugins.verifications.anchored')
+                  : t('plugins.verifications.anchorInvalid')}
+            </Badge>
+            <span>{t('plugins.verifications.checked', { count: chain.data.checked })}</span>
+          </div>
+        ) : null}
+
+        {verifications.data?.length === 0 ? (
+          <Empty title={t('plugins.verifications.empty')} body={t('plugins.verifications.emptyBody')} />
+        ) : (
+          <div className={styles.stack}>
+            {verifications.data?.map(entry => (
+              <div key={entry.id} className={styles.cardMeta}>
+                <span>
+                  {entry.plugin_id} {t('plugins.version', { version: entry.plugin_version })}
+                </span>
+                <code title={entry.package_sha256}>{entry.package_sha256.slice(0, 12)}…</code>
+                <Badge tone={entry.signature_verified ? 'success' : 'warning'}>
+                  {entry.signature_verified
+                    ? t('plugins.verifications.signatureOk')
+                    : t('plugins.verifications.signatureBad')}
+                </Badge>
+              </div>
             ))}
           </div>
         )}
