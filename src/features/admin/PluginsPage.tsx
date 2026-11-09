@@ -203,9 +203,7 @@ export function PluginsPage() {
             {rows.map(plugin => (
               <article key={plugin.id} className={styles.card}>
                 <div className={styles.cardHead}>
-                  <span className={styles.pluginMark} aria-hidden="true">
-                    {monogram(plugin.name || plugin.id)}
-                  </span>
+                  <PluginMark id={plugin.id} name={plugin.name || plugin.id} />
                   <div className={styles.cardTitles}>
                     <h3 className={styles.cardTitle}>{plugin.name}</h3>
                     <span className={styles.cardVer}>
@@ -467,11 +465,39 @@ export function PluginsPage() {
 }
 
 /**
- * Two characters that stand in for a package icon.
+ * The package icon, or a monogram when there is none.
  *
- * Manifests have no icon yet, and a list of identically shaped rows is hard to
- * scan; a monogram at least makes a plugin recognisable before you read its
- * name. Latin names take their initials, CJK names their first character.
+ * A plugin may declare an icon in its manifest; the server reads it out of the
+ * package it installed and serves it here. Anything that fails to load — no
+ * icon, a broken file, a plugin that was removed — falls back to the monogram,
+ * so the list never shows a broken image frame.
+ */
+export function PluginMark({ id, name }: { id: string; name: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <span className={styles.pluginMark} aria-hidden="true">
+        {monogram(name)}
+      </span>
+    )
+  }
+  return (
+    <img
+      className={styles.pluginMark}
+      src={`/api/v1/plugins/${encodeURIComponent(id)}/icon`}
+      alt=""
+      aria-hidden="true"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+/**
+ * Two characters that stand in for a package icon when the package has none.
+ *
+ * Identically shaped rows are hard to scan, so the first letters of a name (the
+ * first character, for a CJK name) at least make a plugin recognisable before
+ * you read it.
  */
 export function monogram(name: string): string {
   const words = name.trim().split(/[\s_\-.]+/).filter(Boolean)

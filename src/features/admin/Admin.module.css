@@ -438,6 +438,8 @@
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 500;
+  object-fit: contain;
+  padding: 0.3rem;
   letter-spacing: 0.02em;
 }
 
