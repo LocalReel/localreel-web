@@ -563,6 +563,10 @@ export const en = {
   'audit.system': 'the server',
   'audit.action.sourceDelete': 'Deleted a source',
   'audit.action.shutdown': 'Stopped the server',
+  'audit.action.userCreate': 'Created an account',
+  'audit.action.userUpdate': 'Changed an account',
+  'audit.action.userDelete': 'Deleted an account',
+  'audit.action.allowRemote': 'Changed remote access',
   'lanCard.title': 'Watch on your phone too',
   'lanCard.body':
     'Right now only this computer can open the library. Allow other devices and the tablets and phones on the same Wi-Fi can watch too — with their own accounts.',

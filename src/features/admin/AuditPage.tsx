@@ -70,5 +70,9 @@ export function AuditPage() {
 function actionLabel(action: string, t: ReturnType<typeof useT>): string {
   if (action === 'source.delete') return t('audit.action.sourceDelete')
   if (action === 'server.shutdown') return t('audit.action.shutdown')
+  if (action === 'user.create') return t('audit.action.userCreate')
+  if (action === 'user.update') return t('audit.action.userUpdate')
+  if (action === 'user.delete') return t('audit.action.userDelete')
+  if (action === 'config.allow_remote') return t('audit.action.allowRemote')
   return action
 }
