@@ -45,6 +45,7 @@ import type {
   SeriesList,
   Source,
   Track,
+  UpdateDownload,
   UpdateStatus,
   User,
 } from './types'
@@ -417,6 +418,16 @@ export function fetchHealth(): Promise<Health> {
 
 export function fetchUpdateStatus(refresh = false): Promise<UpdateStatus> {
   return request<UpdateStatus>(`/api/v1/admin/update${refresh ? '?refresh=true' : ''}`)
+}
+
+/** Start the background download; the result is the new download state. */
+export function startUpdateDownload(): Promise<UpdateDownload> {
+  return request<UpdateDownload>('/api/v1/admin/update/download', { method: 'POST' })
+}
+
+/** Hand the verified installer over; the server exits shortly afterwards. */
+export function applyUpdate(): Promise<UpdateDownload> {
+  return request<UpdateDownload>('/api/v1/admin/update/apply', { method: 'POST' })
 }
 
 export function shutdown(): Promise<{ status: string }> {

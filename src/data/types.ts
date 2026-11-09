@@ -291,6 +291,31 @@ export interface Health {
   uptime_seconds: number
 }
 
+export type UpdateInstallKind = 'per_user_setup' | 'system_msi' | 'portable'
+
+/** Why this installation cannot replace itself; null when it can. */
+export type UpdateInstallReason = 'system_msi' | 'portable'
+
+export interface UpdateInstall {
+  kind: UpdateInstallKind
+  can_apply: boolean
+  reason: UpdateInstallReason | null
+  install_dir: string
+}
+
+export type UpdateDownloadPhase = 'idle' | 'downloading' | 'ready' | 'installing' | 'failed'
+
+/** The installer download, shared by GET /admin/update and the two POSTs. */
+export interface UpdateDownload {
+  phase: UpdateDownloadPhase
+  version: string | null
+  bytes: number
+  total: number
+  /** A complete sentence from the server; render it as written. */
+  error: string | null
+  ready: boolean
+}
+
 export interface UpdateStatus {
   enabled: boolean
   current: string
@@ -303,6 +328,8 @@ export interface UpdateStatus {
   update_available: boolean
   checked_at: number
   error: string | null
+  install: UpdateInstall
+  download: UpdateDownload
 }
 
 export interface MetadataStatus {
