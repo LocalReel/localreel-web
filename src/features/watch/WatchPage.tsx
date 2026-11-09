@@ -15,6 +15,7 @@ import { Spinner } from '../../ui/Spinner'
 import { usePlayback } from '../player/usePlayback'
 import { useSavedState } from '../player/useSavedState'
 import { useVideoElement } from '../player/useVideoElement'
+import { ShareDialog } from '../share/ShareDialog'
 import styles from './Watch.module.css'
 
 export function WatchPage({ id }: { id: string }) {
@@ -24,6 +25,7 @@ export function WatchPage({ id }: { id: string }) {
   const [resumeAt, setResumeAt] = useState<number | null>(null)
   const [muted, setMuted] = useState(false)
   const [controlsVisible, setControlsVisible] = useState(true)
+  const [shareOpen, setShareOpen] = useState(false)
   const [hoverRatio, setHoverRatio] = useState<number | null>(null)
   const [scrubbing, setScrubbing] = useState(false)
   const hideTimer = useRef<number | null>(null)
@@ -140,6 +142,15 @@ export function WatchPage({ id }: { id: string }) {
         </Link>
         <div className={styles.topSpacer} />
         <div className={styles.topActions}>
+          <button
+            type="button"
+            className={styles.circleButton}
+            aria-label={t('share.action')}
+            title={t('share.action')}
+            onClick={() => setShareOpen(true)}
+          >
+            <Icon name="external" size={17} />
+          </button>
           <button
             type="button"
             className={styles.circleButton}
@@ -396,6 +407,12 @@ export function WatchPage({ id }: { id: string }) {
           </Link>
         </div>
       </section>
+
+      <ShareDialog
+        mediaId={mediaId}
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   )
 }

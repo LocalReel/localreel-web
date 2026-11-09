@@ -625,3 +625,37 @@ export async function fetchAudit(plugin?: string, limit = 50): Promise<AuditEntr
   )
   return body.entries
 }
+
+/** A link that lets someone without an account read one item. */
+export interface MediaShare {
+  token: string
+  media_id: number
+  url: string
+  api: string
+  created_at: number
+  expires_at: number | null
+  revoked_at: number | null
+  allow_download: boolean
+}
+
+export async function createShare(
+  mediaId: number,
+  body: { ttl_hours?: number; allow_download?: boolean },
+): Promise<MediaShare> {
+  return request<MediaShare>(`/api/v1/media/${mediaId}/share`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function fetchShares(mediaId: number): Promise<MediaShare[]> {
+  const body = await request<{ items: MediaShare[] }>(`/api/v1/media/${mediaId}/share`)
+  return body.items
+}
+
+export async function revokeShare(token: string): Promise<void> {
+  await request<{ revoked: boolean }>(`/api/v1/shares/${encodeURIComponent(token)}`, {
+    method: 'DELETE',
+  })
+}
