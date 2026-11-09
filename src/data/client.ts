@@ -508,12 +508,15 @@ export async function fetchStagedPackages(): Promise<StagedPackage[]> {
 export function installStagedPackage(
   id: string,
   version: string,
-): Promise<{ restart_required: boolean }> {
-  return request<{ restart_required: boolean }>('/api/v1/plugins/packages/install', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ id, version }),
-  })
+): Promise<{ restart_required: boolean; restarted?: boolean }> {
+  return request<{ restart_required: boolean; restarted?: boolean }>(
+    '/api/v1/plugins/packages/install',
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, version }),
+    },
+  )
 }
 
 export function deleteStagedPackage(id: string, version: string): Promise<void> {

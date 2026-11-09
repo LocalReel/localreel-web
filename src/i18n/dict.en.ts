@@ -434,6 +434,7 @@ export const en = {
   'plugins.staged.delete': 'Delete',
   'plugins.staged.deletePrompt': 'Delete {id} {version} from staging?',
   'plugins.staged.restartRequired': '{id} {version} installed; restart the server to load it.',
+  'plugins.staged.installedNow': '{id} {version} installed; the plugin is restarting now.',
   'plugins.staged.upload': 'Upload .lrplug',
   'plugins.staged.publisher': 'Publisher',
   'plugins.staged.signature': 'Signature',

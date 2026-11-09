@@ -74,7 +74,14 @@ export function PluginsPage() {
       `install:${package_.id}:${package_.version}`,
       async () => {
         const result = await installStagedPackage(package_.id, package_.version)
-        if (result.restart_required) {
+        if (result.restarted) {
+          setInstallNotice(
+            t('plugins.staged.installedNow', {
+              id: package_.id,
+              version: package_.version,
+            }),
+          )
+        } else if (result.restart_required) {
           setInstallNotice(
             t('plugins.staged.restartRequired', {
               id: package_.id,

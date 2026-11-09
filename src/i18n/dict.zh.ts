@@ -424,6 +424,7 @@ export const zh: Record<TranslationKey, string> = {
   'plugins.staged.delete': '删除',
   'plugins.staged.deletePrompt': '从暂存区删除 {id} {version}？',
   'plugins.staged.restartRequired': '{id} {version} 已安装；重启服务器后加载。',
+  'plugins.staged.installedNow': '{id} {version} 已安装；插件正在重启。',
   'plugins.staged.upload': '上传 .lrplug',
   'plugins.staged.publisher': '发布者',
   'plugins.staged.signature': '签名',
