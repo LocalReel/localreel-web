@@ -548,6 +548,13 @@ export const en = {
   'share.error': 'This link could not be loaded.',
   'share.expires': 'Expires {date}',
   'share.footer': 'Shared from a LocalReel library.',
+  'accounts.sessions.title': 'Signed-in browsers',
+  'accounts.sessions.body':
+    'Every browser holding a session for this library. Revoking one signs that browser out immediately.',
+  'accounts.sessions.empty': 'No browser is signed in.',
+  'accounts.sessions.lastSeen': 'Seen {when}',
+  'accounts.sessions.unknownAgent': 'Unknown browser',
+  'accounts.sessions.revoke': 'Sign out',
   'settings.danger': 'Danger zone',
   'settings.danger.body': 'Actions here stop the program for everyone using it.',
   'settings.about': 'About this install',

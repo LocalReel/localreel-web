@@ -14,6 +14,7 @@ import { useConfirm, useToast } from '../../ui/Feedback'
 import { SelectField, TextField } from '../../ui/Field'
 import { Panel } from '../../ui/Panel'
 import { useAuth } from '../auth/context'
+import { SessionsPanel } from './SessionsPanel'
 import { Notice, useAction } from './shared'
 import styles from './Admin.module.css'
 
@@ -236,6 +237,8 @@ export function AccountsPage() {
           />
         )}
       </Panel>
+
+      <SessionsPanel />
 
       <Dialog
         open={resetFor != null}

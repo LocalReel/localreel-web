@@ -368,8 +368,7 @@
   white-space: nowrap;
 }
 
-.tableActions {
-  display: flex;
+.tableActions {  display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-1);
@@ -815,5 +814,80 @@
   .uploadForm {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ---- signed-in browsers ------------------------------------------------ */
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+}
+
+.iconButton:hover {
+  color: var(--fg);
+  background: var(--bg-hover);
+}
+
+.sessionList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sessionItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: var(--line-hair) solid var(--line);
+}
+
+.sessionItem:first-child {
+  border-top: 0;
+}
+
+.sessionWho {
+  display: grid;
+  flex: 1 1 14rem;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.sessionUser {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.sessionAgent {
+  overflow: hidden;
+  color: var(--fg-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionWhen {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.sessionRevoke {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.sessionRevoke:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.sessionRevoke:disabled {
+  opacity: 0.5;
 }
 

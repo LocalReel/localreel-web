@@ -659,3 +659,27 @@ export async function revokeShare(token: string): Promise<void> {
     method: 'DELETE',
   })
 }
+
+/** One signed-in browser. `id` is a hash, not the session cookie. */
+export interface SessionInfo {
+  id: string
+  user_id: number
+  username: string
+  role: string
+  created_at: number
+  expires_at: number
+  last_seen_at: number
+  user_agent?: string
+}
+
+export async function fetchSessions(): Promise<SessionInfo[]> {
+  const body = await request<{ items: SessionInfo[] }>('/api/v1/admin/sessions')
+  return body.items
+}
+
+export async function revokeSession(id: string): Promise<void> {
+  await request<{ revoked: boolean }>(
+    `/api/v1/admin/sessions/${encodeURIComponent(id)}/revoke`,
+    { method: 'POST' },
+  )
+}
