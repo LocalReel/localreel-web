@@ -119,6 +119,8 @@ try {
     'Staged packages',
     'Install',
     'Upload .lrplug',
+    'Publisher',
+    'Signature',
     'Package activity',
     'package.install',
   ]

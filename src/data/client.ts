@@ -525,9 +525,15 @@ export function deleteStagedPackage(id: string, version: string): Promise<void> 
 
 export function uploadPluginPackage(
   file: File,
+  publisher?: string,
+  signature?: string,
 ): Promise<{ manifest: { id: string; version: string } }> {
+  const params = new URLSearchParams()
+  if (publisher) params.set('publisher', publisher)
+  if (signature) params.set('signature', signature)
+  const queryString = params.size > 0 ? `?${params.toString()}` : ''
   return request<{ manifest: { id: string; version: string } }>(
-    '/api/v1/plugins/packages/upload',
+    `/api/v1/plugins/packages/upload${queryString}`,
     { method: 'POST', body: file },
   )
 }

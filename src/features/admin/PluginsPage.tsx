@@ -21,6 +21,7 @@ import { useT } from '../../i18n'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
 import { Empty } from '../../ui/Empty'
+import { TextField } from '../../ui/Field'
 import { Icon } from '../../ui/Icons'
 import { Panel } from '../../ui/Panel'
 import { LoadingRow } from '../../ui/Spinner'
@@ -47,6 +48,8 @@ export function PluginsPage() {
     staleTime: 15_000,
   })
   const [installNotice, setInstallNotice] = useState<string | null>(null)
+  const [publisher, setPublisher] = useState('')
+  const [signature, setSignature] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
   const action = useAction()
 
@@ -89,13 +92,18 @@ export function PluginsPage() {
       .run(
         'upload',
         async () => {
-          const result = await uploadPluginPackage(file)
+          const result = await uploadPluginPackage(
+            file,
+            publisher.trim() || undefined,
+            signature.trim() || undefined,
+          )
           setInstallNotice(
             t('plugins.staged.uploaded', {
               id: result.manifest.id,
               version: result.manifest.version,
             }),
           )
+          setSignature('')
         },
         () => staged.reload(),
       )
@@ -320,32 +328,44 @@ export function PluginsPage() {
         title={t('plugins.staged.title')}
         note={t('plugins.staged.note')}
         tools={
-          <div className={styles.cardMeta}>
-            <label className={buttonClass('secondary', 'sm')}>
-              <input
-                ref={fileInput}
-                type="file"
-                accept=".lrplug,application/zip"
-                hidden
-                onChange={event => {
-                  const file = event.target.files?.[0]
-                  if (file) upload(file)
-                }}
-              />
-              {t('plugins.staged.upload')}
-            </label>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon="refresh"
-              aria-label={t('common.refresh')}
-              loading={staged.refreshing}
-              onClick={() => staged.reload()}
-            />
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="refresh"
+            aria-label={t('common.refresh')}
+            loading={staged.refreshing}
+            onClick={() => staged.reload()}
+          />
         }
       >
         {installNotice ? <p className={styles.muted}>{installNotice}</p> : null}
+        <div className={styles.uploadForm}>
+          <TextField
+            label={t('plugins.staged.publisher')}
+            value={publisher}
+            onChange={event => setPublisher(event.target.value)}
+            placeholder="acme"
+          />
+          <TextField
+            label={t('plugins.staged.signature')}
+            value={signature}
+            onChange={event => setSignature(event.target.value)}
+            placeholder="128 hex"
+          />
+          <label className={buttonClass('secondary', 'sm')}>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".lrplug,application/zip"
+              hidden
+              onChange={event => {
+                const file = event.target.files?.[0]
+                if (file) upload(file)
+              }}
+            />
+            {t('plugins.staged.upload')}
+          </label>
+        </div>
         {staged.data?.length === 0 ? (
           <Empty title={t('plugins.staged.empty')} body={t('plugins.staged.emptyBody')} />
         ) : (

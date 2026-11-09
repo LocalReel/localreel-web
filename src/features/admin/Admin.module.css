@@ -767,3 +767,12 @@
     padding: var(--space-4);
   }
 }
+
+.uploadForm {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(12rem, 2fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
