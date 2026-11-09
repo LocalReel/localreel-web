@@ -22,6 +22,7 @@ import { Panel } from '../../ui/Panel'
 import { Progress } from '../../ui/Progress'
 import { LoadingRow } from '../../ui/Spinner'
 import { FactList, Notice, PathList, StatTile, buttonClass, type Fact, useAction } from './shared'
+import { LanCard } from './LanCard'
 import styles from './Admin.module.css'
 import updateStyles from './UpdateCard.module.css'
 
@@ -245,6 +246,7 @@ export function OverviewPage() {
 
   return (
     <div className={styles.stack}>
+      <LanCard />
       <Panel
         title={t('overview.health')}
         tools={

@@ -563,6 +563,13 @@ export const en = {
   'audit.system': 'the server',
   'audit.action.sourceDelete': 'Deleted a source',
   'audit.action.shutdown': 'Stopped the server',
+  'lanCard.title': 'Watch on your phone too',
+  'lanCard.body':
+    'Right now only this computer can open the library. Allow other devices and the tablets and phones on the same Wi-Fi can watch too — with their own accounts.',
+  'lanCard.confirmTitle': 'Allow other devices?',
+  'lanCard.failed': 'The setting could not be saved.',
+  'lanCard.later': 'Not now',
+  'lanCard.dismissSaved': 'Got it',
   'settings.server': 'Server',
   'settings.server.body': 'What this process is actually running with.',
   'settings.server.listen': 'Listening on',

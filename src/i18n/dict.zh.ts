@@ -549,6 +549,13 @@ export const zh: Record<TranslationKey, string> = {
   'audit.system': '服务器',
   'audit.action.sourceDelete': '删除了来源',
   'audit.action.shutdown': '关闭了服务器',
+  'lanCard.title': '也可以让手机来看',
+  'lanCard.body':
+    '现在只有这台电脑能打开媒体库。允许其他设备之后，同一个 Wi-Fi 下的手机和平板也能看，各用各的账户。',
+  'lanCard.confirmTitle': '允许其他设备访问？',
+  'lanCard.failed': '这个设置没能保存。',
+  'lanCard.later': '以后再说',
+  'lanCard.dismissSaved': '知道了',
   'settings.server': '服务器',
   'settings.server.body': '这个进程实际使用的配置。',
   'settings.server.listen': '监听地址',
