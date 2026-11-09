@@ -32,6 +32,7 @@ import type {
   MetadataStatus,
   Playback,
   PluginDescriptor,
+  SandboxStatus,
   RemapReport,
   Role,
   ScanIssue,
@@ -479,6 +480,10 @@ export async function restoreBackupUpload(file: File): Promise<{ job_id: string 
 export async function fetchPlugins(): Promise<PluginDescriptor[]> {
   const body = await request<{ plugins: PluginDescriptor[] }>('/api/v1/plugins')
   return body.plugins
+}
+
+export function fetchSandboxStatus(): Promise<SandboxStatus> {
+  return request<SandboxStatus>('/api/v1/plugins/sandbox-status')
 }
 
 export function fetchCapabilities(id: string): Promise<CapabilityReport> {

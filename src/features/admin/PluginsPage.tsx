@@ -1,6 +1,6 @@
 import { routeHref } from '../../app/match'
 import { Link } from '../../app/router'
-import { fetchPlugins, restartPlugin, setPluginEnabled } from '../../data/client'
+import { fetchPlugins, fetchSandboxStatus, restartPlugin, setPluginEnabled } from '../../data/client'
 import { useQuery } from '../../data/hooks'
 import type { PluginDescriptor } from '../../data/types'
 import { useT } from '../../i18n'
@@ -23,6 +23,7 @@ import styles from './Admin.module.css'
 export function PluginsPage() {
   const t = useT()
   const plugins = useQuery('plugins', fetchPlugins, { staleTime: 15_000 })
+  const sandbox = useQuery('plugins:sandbox', fetchSandboxStatus, { staleTime: 60_000 })
   const action = useAction()
 
   const toggle = (plugin: PluginDescriptor) => {
@@ -42,6 +43,13 @@ export function PluginsPage() {
   }
 
   const rows = plugins.data ?? []
+  const sandboxReady =
+    sandbox.data?.app_container === true &&
+    (sandbox.data.platform === 'linux'
+      ? sandbox.data.unshare_present
+      : sandbox.data.platform === 'windows'
+        ? sandbox.data.wrapper_present
+        : false)
 
   return (
     <div className={styles.stack}>
@@ -61,6 +69,25 @@ export function PluginsPage() {
           />
         }
       >
+        {sandbox.data ? (
+          <div className={styles.cardMeta}>
+            <Badge tone="outline">
+              {t('plugins.sandbox.platform', { platform: sandbox.data.platform })}
+            </Badge>
+            <Badge tone={sandboxReady ? 'success' : 'warning'}>
+              {sandboxReady ? t('plugins.sandbox.ready') : t('plugins.sandbox.unavailable')}
+            </Badge>
+            {sandbox.data.app_container &&
+            sandbox.data.platform === 'windows' &&
+            !sandbox.data.wrapper_present ? (
+              <Badge tone="warning">{t('plugins.sandbox.wrapperMissing')}</Badge>
+            ) : null}
+            {sandbox.data.app_container && !sandbox.data.unshare_present && sandbox.data.platform === 'linux' ? (
+              <Badge tone="warning">{t('plugins.sandbox.unshareMissing')}</Badge>
+            ) : null}
+          </div>
+        ) : null}
+
         {plugins.error ? <Notice error={plugins.error} onDismiss={() => plugins.reload()} /> : null}
 
         {plugins.loading && plugins.data === undefined ? (
@@ -86,6 +113,16 @@ export function PluginsPage() {
                     {t('plugins.package')} <code>{plugin.package}</code>
                   </span>
                   <span>{t('plugins.restarts', { count: plugin.restarts })}</span>
+                  {plugin.transport ? (
+                    <Badge tone="outline">
+                      {t('plugins.transport', { transport: plugin.transport })}
+                    </Badge>
+                  ) : null}
+                  <Badge tone={plugin.sandbox === 'appcontainer' ? 'success' : 'outline'}>
+                    {plugin.sandbox === 'appcontainer'
+                      ? t('plugins.sandbox.appcontainer')
+                      : t('plugins.sandbox.none')}
+                  </Badge>
                   {plugin.network ? <Badge tone="outline">{t('plugins.network')}</Badge> : null}
                 </div>
 

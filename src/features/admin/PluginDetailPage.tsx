@@ -227,6 +227,20 @@ export function PluginDetailPage({ pluginId }: { pluginId?: string }) {
                 value: plugin.network ? t('common.enabled') : t('common.disabled'),
               },
               {
+                key: 'transport',
+                label: t('plugins.transport.label'),
+                value: plugin.transport || t('common.none'),
+                mono: true,
+              },
+              {
+                key: 'sandbox',
+                label: t('plugins.sandbox'),
+                value:
+                  plugin.sandbox === 'appcontainer'
+                    ? t('plugins.sandbox.appcontainer')
+                    : t('plugins.sandbox.none'),
+              },
+              {
                 key: 'permissions',
                 label: t('plugins.permissions'),
                 value:

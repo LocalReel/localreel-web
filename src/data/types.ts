@@ -335,6 +335,15 @@ export interface PluginDescriptor {
   generation: number
   started_at?: number
   package: string
+  transport: string
+  sandbox: string
+}
+
+export interface SandboxStatus {
+  platform: string
+  app_container: boolean
+  wrapper_present: boolean
+  unshare_present: boolean
 }
 
 export interface RequestedCapability {
