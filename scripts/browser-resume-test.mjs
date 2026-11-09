@@ -103,7 +103,7 @@ try {
 
   await send('Page.enable')
   await send('Runtime.enable')
-  await send('Page.navigate', { url: `${base}/watch` })
+  await send('Page.navigate', { url: `${base}/reels` })
 
   const deadline = Date.now() + 20000
   let actual = null
@@ -123,7 +123,7 @@ try {
   }
   if (Math.abs(actual.t - expected) >= 3) {
     throw new Error(
-      `resume failed: expected currentTimeâ‰ˆ${expected.toFixed(2)}, got ${actual.t.toFixed(2)} (duration ${actual.d})`,
+      `resume failed: expected currentTimeâ‰?{expected.toFixed(2)}, got ${actual.t.toFixed(2)} (duration ${actual.d})`,
     )
   }
   console.log(

@@ -1,0 +1,88 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  animation: fade var(--dur-base) var(--ease);
+}
+
+.dialog {
+  position: relative;
+  width: min(34rem, 100%);
+  max-height: min(85dvh, 44rem);
+  display: flex;
+  flex-direction: column;
+  border: var(--line-hair) solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-3);
+  animation: rise var(--dur-base) var(--ease);
+}
+
+.wide {
+  width: min(52rem, 100%);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.description {
+  margin-top: var(--space-2);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.body {
+  padding: var(--space-5);
+  overflow: auto;
+}
+
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) 0 0;
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+}
+
+.close:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}

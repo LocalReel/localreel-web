@@ -1,0 +1,332 @@
+.feed {
+  position: fixed;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+  background: #050506;
+  scrollbar-width: none;
+  touch-action: pan-y;
+}
+
+.feed::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  position: relative;
+  height: 100dvh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  background: #050506;
+}
+
+.backdrop {
+  position: absolute;
+  inset: -40px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(30px) brightness(0.35) saturate(1.1);
+  transform: scale(1.1);
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cover {
+  object-fit: cover;
+}
+
+.contain {
+  object-fit: contain;
+}
+
+.poster {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  background: #050506;
+}
+
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: calc(var(--space-3) + env(safe-area-inset-top)) var(--space-3) var(--space-3);
+  background: linear-gradient(rgba(5, 5, 6, 0.6), transparent);
+  pointer-events: none;
+}
+
+.top > * {
+  pointer-events: auto;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: rgba(10, 10, 11, 0.5);
+  color: var(--fg);
+  font-size: var(--text-xs);
+  backdrop-filter: blur(8px);
+}
+
+.overlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-16) var(--space-4) calc(var(--space-8) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(5, 5, 6, 0.92), rgba(5, 5, 6, 0.4) 45%, transparent);
+  pointer-events: none;
+}
+
+.info {
+  min-width: 0;
+  flex: 1;
+}
+
+.series {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.episode {
+  margin-top: var(--space-1);
+  color: rgba(244, 241, 234, 0.86);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+}
+
+.meta {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: rgba(244, 241, 234, 0.6);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.rail {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  pointer-events: auto;
+}
+
+.action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 3rem;
+  color: var(--fg);
+  font-size: var(--text-2xs);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
+.action[aria-pressed='true'] {
+  color: var(--liked);
+}
+
+.progress {
+  position: absolute;
+  right: 0;
+  bottom: env(safe-area-inset-bottom);
+  left: 0;
+  z-index: 5;
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.track {
+  position: relative;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.24);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--accent);
+}
+
+.timeRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  color: rgba(244, 241, 234, 0.7);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+.badge {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 5;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: rgba(5, 5, 6, 0.66);
+  color: var(--fg);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Landscape video inside a portrait screen keeps its letterbox; this pill is
+   the way out of it, placed just under the picture like a streaming app. */
+.fullscreenPill {
+  position: absolute;
+  bottom: calc(28% + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.3rem 0.7rem;
+  border: var(--line-hair) solid rgba(244, 241, 234, 0.22);
+  border-radius: var(--radius-pill);
+  background: rgba(10, 10, 11, 0.5);
+  color: rgba(244, 241, 234, 0.9);
+  font-size: var(--text-2xs);
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+
+.fullscreenPill:hover {
+  color: var(--fg);
+  border-color: rgba(244, 241, 234, 0.4);
+}
+
+.slide:fullscreen .backdrop {
+  display: none;
+}
+
+.burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 6;
+  color: var(--liked);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: burst 700ms var(--ease) forwards;
+}
+
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+}
+
+.status {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  gap: var(--space-3);
+  place-items: center;
+  padding: var(--space-8);
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.statusTitle {
+  color: var(--fg);
+  font-size: var(--text-lg);
+}
+
+.ended {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  display: grid;
+  gap: var(--space-3);
+  place-content: center;
+  justify-items: center;
+  background: rgba(5, 5, 6, 0.82);
+  color: var(--fg);
+  text-align: center;
+}
+
+.empty {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  background: #050506;
+  color: var(--fg-muted);
+  text-align: center;
+}
+
+.emptyTitle {
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+}

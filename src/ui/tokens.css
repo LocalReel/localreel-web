@@ -1,0 +1,205 @@
+/*
+ * Design tokens.
+ *
+ * Three layers, in this order:
+ *   1. primitives  — raw scales; only this file may name a hex value
+ *   2. semantics   — what a component is allowed to reference
+ *   3. themes      — the same semantic names, two palettes
+ *
+ * Rules for every other stylesheet in this app:
+ *   - never write a hex colour, a raw font-size in px, or a magic radius;
+ *   - use `--space-*`, `--text-*`, `--radius-*`, `--line-*`, `--accent*`.
+ * The default theme is dark ("screening room"); `data-theme="light"` is the
+ * daytime edition and exists to prove the palette is a variable, not a mood.
+ */
+
+:root {
+  /* ---- 1. primitives: type ------------------------------------------- */
+  --font-display: 'Newsreader', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei',
+    'Hiragino Sans GB', sans-serif;
+  --font-sans: 'IBM Plex Sans', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei',
+    'Hiragino Sans GB', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --text-2xs: 0.6875rem; /* 11 — badge counts only, never prose */
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-base: 0.875rem; /* 14 — UI default */
+  --text-md: 1rem; /* 16 — reading */
+  --text-lg: 1.125rem; /* 18 */
+  --text-xl: 1.375rem; /* 22 */
+  --text-2xl: 1.75rem; /* 28 */
+  --text-3xl: 2.25rem; /* 36 */
+  --text-display: clamp(2rem, 3.4vw, 2.75rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-kicker: 0.14em;
+  --tracking-tight: -0.01em;
+
+  /* ---- 1. primitives: space (4px grid) -------------------------------- */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* ---- 1. primitives: shape ------------------------------------------ */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --line-hair: 1px;
+
+  /* ---- 1. primitives: motion ----------------------------------------- */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --ease: cubic-bezier(0.2, 0.6, 0.3, 1);
+
+  /* ---- 1. primitives: layout ----------------------------------------- */
+  --shell-max: 92rem;
+  --rail-w: 15rem;
+  --rail-w-compact: 4.25rem;
+  --topbar-h: 3.5rem;
+  --bottombar-h: 3.75rem;
+
+  /* ---- 2. semantics (dark is the default) ----------------------------- */
+  --bg: #0a0a0b;
+  --bg-raised: #121214;
+  --bg-sunken: #060607;
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(255, 255, 255, 0.08);
+
+  --fg: #f4f1ea;
+  --fg-muted: #a9a29a;
+  --fg-faint: #847d75;
+  --fg-inverse: #0a0a0b;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --accent: #f2a33c;
+  --accent-ink: #1a1206;
+  --accent-soft: rgba(242, 163, 60, 0.14);
+  --accent-quiet: rgba(242, 163, 60, 0.3);
+
+  --liked: #ff7a5c;
+  --danger: #ff7364;
+  --danger-soft: rgba(255, 115, 100, 0.12);
+  --success: #79d99a;
+  --success-soft: rgba(121, 217, 154, 0.12);
+  --warning: #f0c65a;
+  --warning-soft: rgba(240, 198, 90, 0.12);
+
+  --scrim: rgba(6, 6, 7, 0.72);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.55);
+
+  /* Density: comfortable on the couch, compact in the console. */
+  --row-h: 2.75rem;
+  --card-gap: var(--space-4);
+
+  color-scheme: dark;
+}
+
+/* ---- 3. themes ------------------------------------------------------- */
+
+[data-theme='light'] {
+  --bg: #f6f2ea;
+  --bg-raised: #fdfbf6;
+  --bg-sunken: #ece6da;
+  --bg-hover: rgba(28, 24, 18, 0.05);
+  --bg-active: rgba(28, 24, 18, 0.09);
+
+  --fg: #1a1712;
+  --fg-muted: #5d564c;
+  --fg-faint: #6f675c;
+  --fg-inverse: #fdfbf6;
+
+  --line: rgba(26, 23, 18, 0.12);
+  --line-strong: rgba(26, 23, 18, 0.22);
+
+  --accent: #8a4a18;
+  --accent-ink: #fff8ef;
+  --accent-soft: rgba(138, 74, 24, 0.12);
+  --accent-quiet: rgba(138, 74, 24, 0.28);
+
+  --liked: #c2412a;
+  --danger: #b02a1c;
+  --danger-soft: rgba(176, 42, 28, 0.1);
+  --success: #1f6b3a;
+  --success-soft: rgba(31, 107, 58, 0.1);
+  --warning: #7a5300;
+  --warning-soft: rgba(122, 83, 0, 0.12);
+
+  --scrim: rgba(20, 17, 12, 0.55);
+  --shadow-1: 0 1px 2px rgba(26, 23, 18, 0.12);
+  --shadow-2: 0 8px 24px rgba(26, 23, 18, 0.12);
+  --shadow-3: 0 24px 64px rgba(26, 23, 18, 0.16);
+
+  color-scheme: light;
+}
+
+/* Accent presets: each keeps its own ink colour so contrast never depends on
+   the host theme. `tungsten` is the shipped default. */
+[data-accent='mint'] {
+  --accent: #5fd6a4;
+  --accent-ink: #04140d;
+  --accent-soft: rgba(95, 214, 164, 0.14);
+  --accent-quiet: rgba(95, 214, 164, 0.3);
+}
+
+[data-accent='rose'] {
+  --accent: #f28ba8;
+  --accent-ink: #1d050c;
+  --accent-soft: rgba(242, 139, 168, 0.14);
+  --accent-quiet: rgba(242, 139, 168, 0.3);
+}
+
+[data-accent='steel'] {
+  --accent: #8ab4f8;
+  --accent-ink: #05101f;
+  --accent-soft: rgba(138, 180, 248, 0.14);
+  --accent-quiet: rgba(138, 180, 248, 0.3);
+}
+
+[data-theme='light'][data-accent='mint'] {
+  --accent: #0f6b4a;
+  --accent-ink: #f6fffb;
+  --accent-soft: rgba(15, 107, 74, 0.12);
+  --accent-quiet: rgba(15, 107, 74, 0.28);
+}
+
+[data-theme='light'][data-accent='rose'] {
+  --accent: #9c2f4d;
+  --accent-ink: #fff5f7;
+  --accent-soft: rgba(156, 47, 77, 0.12);
+  --accent-quiet: rgba(156, 47, 77, 0.28);
+}
+
+[data-theme='light'][data-accent='steel'] {
+  --accent: #1f4f9c;
+  --accent-ink: #f5f9ff;
+  --accent-soft: rgba(31, 79, 156, 0.12);
+  --accent-quiet: rgba(31, 79, 156, 0.28);
+}
+
+/* Density affects the console only; browsing surfaces keep their air. */
+[data-density='compact'] {
+  --row-h: 2.25rem;
+  --card-gap: var(--space-3);
+}

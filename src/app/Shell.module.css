@@ -1,0 +1,386 @@
+.app {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+/* ---- rail ------------------------------------------------------------- */
+.rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  height: 100dvh;
+  padding: var(--space-5) var(--space-4);
+  border-right: var(--line-hair) solid var(--line);
+  background: var(--bg-sunken);
+}
+
+.brand {
+  display: grid;
+  gap: 2px;
+  padding: 0 var(--space-2);
+}
+
+.brandKicker {
+  color: var(--accent);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-kicker);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.brandWord {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+/* Only visible in the collapsed rail. */
+.brandMark {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.nav {
+  display: grid;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+  font-size: var(--text-base);
+  font-weight: 500;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+}
+
+.navItem:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+
+.navItem[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.navItem[aria-current='page'] svg {
+  stroke-width: 1.9;
+}
+
+.railFoot {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: var(--line-hair) solid var(--line);
+}
+
+.accountButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+
+.accountButton:hover {
+  background: var(--bg-hover);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.accountText {
+  min-width: 0;
+  display: grid;
+}
+
+.accountName {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountRole {
+  color: var(--fg-faint);
+  font-size: var(--text-2xs);
+}
+
+/* ---- main column ------------------------------------------------------ */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--topbar-h);
+  padding: 0 var(--space-5);
+  border-bottom: var(--line-hair) solid var(--line);
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.mobileBrand {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.search {
+  display: flex;
+  flex: 1 1 auto;
+  max-width: 32rem;
+  align-items: center;
+  gap: var(--space-2);
+  height: 2.25rem;
+  padding: 0 var(--space-3);
+  border: var(--line-hair) solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  color: var(--fg-faint);
+}
+
+.search:focus-within {
+  border-color: var(--accent-quiet);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: var(--text-sm);
+  outline: none;
+}
+
+.search input::placeholder {
+  color: var(--fg-faint);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+/* The rail already shows the account on wide screens. */
+.mobileAccount {
+  display: none;
+}
+
+.adminTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-bottom: var(--space-6);
+}
+
+.adminTab {
+  min-height: 2.25rem;
+  font-size: var(--text-sm);
+}
+
+/* A phone cannot afford three wrapped rows of console tabs; one scrollable row
+   keeps the page content above the fold. */
+@media (max-width: 48rem) {
+  .adminTabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+    scrollbar-width: none;
+  }
+
+  .adminTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .adminTab {
+    flex: 0 0 auto;
+  }
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  color: var(--fg-muted);
+}
+
+.iconButton:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-16);
+}
+
+/* ---- bottom navigation (phones) -------------------------------------- */
+.bottomNav {
+  display: none;
+}
+
+/* ---- responsive ------------------------------------------------------- */
+@media (max-width: 72rem) {
+  .app {
+    grid-template-columns: var(--rail-w-compact) minmax(0, 1fr);
+  }
+
+  .rail {
+    padding: var(--space-5) var(--space-2);
+    align-items: center;
+  }
+
+  .brand {
+    padding: 0;
+    text-align: center;
+  }
+
+  .brandKicker,
+  .accountText {
+    display: none;
+  }
+
+  .brandWord {
+    display: none;
+  }
+
+  .brandMark {
+    display: block;
+  }
+
+  .rail .navItem {
+    justify-content: center;
+    width: 2.75rem;
+    padding: 0;
+    gap: 0;
+  }
+
+  .rail .navItem span {
+    display: none;
+  }
+
+  .accountButton {
+    justify-content: center;
+    padding: var(--space-1);
+  }
+
+  .railFoot {
+    width: 100%;
+    justify-items: center;
+  }
+}
+
+@media (max-width: 48rem) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rail {
+    display: none;
+  }
+
+  .topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .mobileBrand {
+    display: block;
+  }
+
+  .search {
+    max-width: none;
+  }
+
+  .content {
+    padding: var(--space-5) var(--space-4) calc(var(--bottombar-h) + var(--space-8));
+  }
+
+  .mobileAccount {
+    display: block;
+  }
+
+  .bottomNav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom));
+    border-top: var(--line-hair) solid var(--line);
+    background: color-mix(in oklab, var(--bg) 92%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .bottomItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-1) 0;
+    border-radius: var(--radius-sm);
+    color: var(--fg-faint);
+    font-size: var(--text-2xs);
+    font-weight: 500;
+  }
+
+  .bottomItem[aria-current='page'] {
+    color: var(--accent);
+  }
+}
+
+/* The immersive surfaces (reels, watch) own the whole viewport. */
+.immersive {
+  min-height: 100dvh;
+  background: var(--bg);
+}

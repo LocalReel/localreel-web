@@ -160,15 +160,54 @@ export async function startMockServer() {
         sendJson(response, 200, { status: 'ok', version: 'mock', media_count: 1 })
         return
       }
-
+      if (url.pathname === '/api/v1/media/1/tracks') {
+        sendJson(response, 200, [])
+        return
+      }
       if (url.pathname === '/sample.webm') {
         await serveFile(request, response, fixture, 'video/webm')
         return
       }
+      if (url.pathname === '/api/v1/series') {
+        sendJson(response, 200, { items: [], total: 0 })
+        return
+      }
+      if (url.pathname === '/api/v1/events') {
+        // The real server keeps this open; a 204 tells EventSource to stop
+        // retrying, which is what a smoke test wants.
+        response.writeHead(204)
+        response.end()
+        return
+      }
+      if (url.pathname === '/api/v1/admin/health') {
+        sendJson(response, 200, {
+          name: 'LocalReel',
+          status: 'ok',
+          version: 'mock',
+          mode: 'server',
+          database: true,
+          ffmpeg: true,
+          ffmpeg_capability: 'full',
+          hwaccel: null,
+          media_count: 1,
+          data_dir: '/tmp',
+          thumbnail_dir: '/tmp',
+          transcode_dir: '/tmp',
+          watchers: { enabled: true, active: 0, skipped: [] },
+          transcodes: { running: 0, queued: 0, limit: 2, sessions: 0 },
+          jobs: [],
+        })
+        return
+      }
+      if (url.pathname.startsWith('/api/')) {
+        sendJson(response, 404, { error: { code: 'not_found', message: `${url.pathname} not found` } })
+        return
+      }
 
-      let pathname = url.pathname === '/' || url.pathname === '/watch' || url.pathname === '/admin'
-        ? '/index.html'
-        : url.pathname
+      // SPA fallback: the server answers any HTML path with the shell, so a
+      // client route survives a reload. Mirrors `spa_fallback` in the core.
+      const hasExtension = /\.[a-z0-9]{2,5}$/i.test(url.pathname)
+      const pathname = hasExtension ? url.pathname : '/index.html'
       const file = resolve(distRoot, `.${pathname}`)
       if (!file.startsWith(distRoot + sep) && file !== join(distRoot, 'index.html')) {
         sendJson(response, 403, { error: 'forbidden' })
@@ -195,5 +234,5 @@ export async function startMockServer() {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { port } = await startMockServer()
-  console.log(`mock LocalReel listening on http://127.0.0.1:${port}/watch`)
+  console.log(`mock LocalReel listening on http://127.0.0.1:${port}/reels`)
 }

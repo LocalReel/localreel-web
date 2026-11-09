@@ -110,7 +110,7 @@ try {
 
   await send('Page.enable')
   await send('Runtime.enable')
-  await send('Page.navigate', { url: `${base}/watch` })
+  await send('Page.navigate', { url: `${base}/reels` })
 
   const deadline = Date.now() + 20000
   let actual = null
