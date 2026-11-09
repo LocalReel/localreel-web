@@ -106,7 +106,7 @@ export async function startMockServer() {
   const requests = []
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
-    requests.push({ method: request.method, path: url.pathname })
+    requests.push({ method: request.method, path: url.pathname, headers: request.headers })
     response.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",

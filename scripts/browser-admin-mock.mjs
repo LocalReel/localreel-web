@@ -175,6 +175,24 @@ try {
   }
   await waitForText('No staged packages')
 
+  const signature = 'a'.repeat(128)
+  await evaluate(`(() => {
+    const set = (placeholder, value) => {
+      const input = [...document.querySelectorAll('input')].find(
+        item => item.placeholder === placeholder,
+      )
+      if (!input) throw new Error('missing input ' + placeholder)
+      const setter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value',
+      ).set
+      setter.call(input, value)
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+    set('acme', 'acme')
+    set('128 hex', ${JSON.stringify(signature)})
+  })()`)
+
   const uploadPath = join(tmpdir(), `localreel-upload-${process.pid}.lrplug`)
   await writeFile(uploadPath, 'mock package bytes')
   try {
@@ -214,6 +232,16 @@ try {
   )
   if (missingMutations.length > 0) {
     throw new Error(`admin page did not send ${JSON.stringify(missingMutations)}`)
+  }
+  const upload = mock.requests.find(
+    entry => entry.method === 'POST' && entry.path === '/api/v1/plugins/packages/upload',
+  )
+  if (!upload) throw new Error('admin page did not upload the package')
+  if (upload.headers['x-localreel-publisher'] !== 'acme') {
+    throw new Error(`publisher header was ${upload.headers['x-localreel-publisher']}`)
+  }
+  if (upload.headers['x-localreel-signature'] !== signature) {
+    throw new Error('signature header did not match the form value')
   }
   console.log(JSON.stringify({ ok: true, route: '/admin/plugins', expected, requests: mock.requests.length }))
 } finally {
