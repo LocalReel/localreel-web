@@ -528,13 +528,12 @@ export function uploadPluginPackage(
   publisher?: string,
   signature?: string,
 ): Promise<{ manifest: { id: string; version: string } }> {
-  const params = new URLSearchParams()
-  if (publisher) params.set('publisher', publisher)
-  if (signature) params.set('signature', signature)
-  const queryString = params.size > 0 ? `?${params.toString()}` : ''
+  const headers: Record<string, string> = {}
+  if (publisher) headers['x-localreel-publisher'] = publisher
+  if (signature) headers['x-localreel-signature'] = signature
   return request<{ manifest: { id: string; version: string } }>(
-    `/api/v1/plugins/packages/upload${queryString}`,
-    { method: 'POST', body: file },
+    '/api/v1/plugins/packages/upload',
+    { method: 'POST', headers, body: file },
   )
 }
 
