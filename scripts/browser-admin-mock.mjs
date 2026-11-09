@@ -3,7 +3,7 @@
 
 import { spawn, spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdtemp, rm, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -175,6 +175,22 @@ try {
   }
   await waitForText('No staged packages')
 
+  const uploadPath = join(tmpdir(), `localreel-upload-${process.pid}.lrplug`)
+  await writeFile(uploadPath, 'mock package bytes')
+  try {
+    await send('DOM.enable')
+    const document = await send('DOM.getDocument')
+    const input = await send('DOM.querySelector', {
+      nodeId: document.root.nodeId,
+      selector: 'input[type=file]',
+    })
+    if (!input.nodeId) throw new Error('the upload input was missing')
+    await send('DOM.setFileInputFiles', { nodeId: input.nodeId, files: [uploadPath] })
+    await waitForText('uploaded to staging')
+  } finally {
+    await unlink(uploadPath).catch(() => {})
+  }
+
   const requested = [
     '/api/v1/plugins',
     '/api/v1/plugins/sandbox-status',
@@ -191,6 +207,7 @@ try {
   const mutations = [
     { method: 'POST', path: '/api/v1/plugins/packages/install' },
     { method: 'DELETE', path: '/api/v1/plugins/packages/demo-storage/0.2.0' },
+    { method: 'POST', path: '/api/v1/plugins/packages/upload' },
   ]
   const missingMutations = mutations.filter(
     expected => !mock.requests.some(entry => entry.method === expected.method && entry.path === expected.path),
