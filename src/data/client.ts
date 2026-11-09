@@ -34,6 +34,7 @@ import type {
   PluginDescriptor,
   PackageVerification,
   SandboxStatus,
+  StagedPackage,
   VerificationChain,
   RemapReport,
   Role,
@@ -486,6 +487,29 @@ export async function fetchPlugins(): Promise<PluginDescriptor[]> {
 
 export function fetchSandboxStatus(): Promise<SandboxStatus> {
   return request<SandboxStatus>('/api/v1/plugins/sandbox-status')
+}
+
+export async function fetchStagedPackages(): Promise<StagedPackage[]> {
+  const body = await request<{ packages: StagedPackage[] }>('/api/v1/plugins/packages')
+  return body.packages
+}
+
+export function installStagedPackage(
+  id: string,
+  version: string,
+): Promise<{ restart_required: boolean }> {
+  return request<{ restart_required: boolean }>('/api/v1/plugins/packages/install', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ id, version }),
+  })
+}
+
+export function deleteStagedPackage(id: string, version: string): Promise<void> {
+  return request<void>(
+    `/api/v1/plugins/packages/${encodeURIComponent(id)}/${encodeURIComponent(version)}`,
+    { method: 'DELETE' },
+  )
 }
 
 export async function fetchVerifications(limit = 20): Promise<PackageVerification[]> {

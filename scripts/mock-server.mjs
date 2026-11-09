@@ -171,6 +171,32 @@ export async function startMockServer() {
         })
         return
       }
+      if (url.pathname === '/api/v1/plugins/packages') {
+        sendJson(response, 200, {
+          packages: [
+            {
+              id: 'demo-storage',
+              version: '0.2.0',
+              path: 'data/plugins/packages/demo-storage/0.2.0.lrplug',
+              metadata: {
+                sha256: 'a'.repeat(64),
+                publisher: 'acme',
+                signature_verified: true,
+                staged_at: 0,
+              },
+            },
+          ],
+        })
+        return
+      }
+      if (url.pathname === '/api/v1/plugins/packages/install') {
+        sendJson(response, 200, { restart_required: true })
+        return
+      }
+      if (url.pathname.startsWith('/api/v1/plugins/packages/')) {
+        sendJson(response, 200, { deleted: true })
+        return
+      }
       if (url.pathname === '/api/v1/feed') {
         sendJson(response, 200, {
           items: [

@@ -109,7 +109,16 @@ try {
   })
   await send('Page.navigate', { url: `${base}/admin/plugins` })
 
-  const expected = ['Demo storage', 'Transport: stdio', 'OS isolated', 'Verification log', 'Chain valid', 'Signed by host']
+  const expected = [
+    'Demo storage',
+    'Transport: stdio',
+    'OS isolated',
+    'Verification log',
+    'Chain valid',
+    'Signed by host',
+    'Staged packages',
+    'Install',
+  ]
   const deadline = Date.now() + 20000
   let text = ''
   while (Date.now() < deadline) {
@@ -125,7 +134,12 @@ try {
   if (missing.length > 0) {
     throw new Error(`admin page is missing ${JSON.stringify(missing)}\nbody:\n${text.slice(0, 2000)}`)
   }
-  const requested = ['/api/v1/plugins', '/api/v1/plugins/sandbox-status', '/api/v1/plugins/verifications/verify']
+  const requested = [
+    '/api/v1/plugins',
+    '/api/v1/plugins/sandbox-status',
+    '/api/v1/plugins/verifications/verify',
+    '/api/v1/plugins/packages',
+  ]
   const missingRequests = requested.filter(
     path => !mock.requests.some(entry => entry.method === 'GET' && entry.path === path),
   )

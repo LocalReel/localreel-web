@@ -1,15 +1,20 @@
+import { useState } from 'react'
+
 import { routeHref } from '../../app/match'
 import { Link } from '../../app/router'
 import {
+  deleteStagedPackage,
   fetchPlugins,
   fetchSandboxStatus,
+  fetchStagedPackages,
   fetchVerifications,
+  installStagedPackage,
   restartPlugin,
   setPluginEnabled,
   verifyVerificationChain,
 } from '../../data/client'
 import { useQuery } from '../../data/hooks'
-import type { PluginDescriptor } from '../../data/types'
+import type { PluginDescriptor, StagedPackage } from '../../data/types'
 import { useT } from '../../i18n'
 import { Badge } from '../../ui/Badge'
 import { Button } from '../../ui/Button'
@@ -35,6 +40,8 @@ export function PluginsPage() {
     staleTime: 15_000,
   })
   const chain = useQuery('plugins:chain', verifyVerificationChain, { staleTime: 15_000 })
+  const staged = useQuery('plugins:staged', fetchStagedPackages, { staleTime: 15_000 })
+  const [installNotice, setInstallNotice] = useState<string | null>(null)
   const action = useAction()
 
   const toggle = (plugin: PluginDescriptor) => {
@@ -50,6 +57,35 @@ export function PluginsPage() {
       `restart:${plugin.id}`,
       () => restartPlugin(plugin.id),
       () => plugins.reload(),
+    )
+  }
+
+  const install = (package_: StagedPackage) => {
+    void action.run(
+      `install:${package_.id}:${package_.version}`,
+      async () => {
+        const result = await installStagedPackage(package_.id, package_.version)
+        if (result.restart_required) {
+          setInstallNotice(
+            t('plugins.staged.restartRequired', {
+              id: package_.id,
+              version: package_.version,
+            }),
+          )
+        }
+      },
+      () => staged.reload(),
+    )
+  }
+
+  const remove = (package_: StagedPackage) => {
+    if (!window.confirm(t('plugins.staged.deletePrompt', { id: package_.id, version: package_.version }))) {
+      return
+    }
+    void action.run(
+      `unstage:${package_.id}:${package_.version}`,
+      () => deleteStagedPackage(package_.id, package_.version),
+      () => staged.reload(),
     )
   }
 
@@ -240,6 +276,73 @@ export function PluginsPage() {
                 </Badge>
               </div>
             ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel
+        title={t('plugins.staged.title')}
+        note={t('plugins.staged.note')}
+        tools={
+          <Button
+            variant="ghost"
+            size="sm"
+            icon="refresh"
+            aria-label={t('common.refresh')}
+            loading={staged.refreshing}
+            onClick={() => staged.reload()}
+          />
+        }
+      >
+        {installNotice ? <p className={styles.muted}>{installNotice}</p> : null}
+        {staged.data?.length === 0 ? (
+          <Empty title={t('plugins.staged.empty')} body={t('plugins.staged.emptyBody')} />
+        ) : (
+          <div className={styles.stack}>
+            {staged.data?.map(package_ => {
+              const signed = package_.metadata?.signature_verified === true
+              return (
+                <div
+                  key={`${package_.id}:${package_.version}`}
+                  className={styles.cardMeta}
+                >
+                  <span>
+                    <strong>{package_.id}</strong>{' '}
+                    {t('plugins.version', { version: package_.version })}
+                  </span>
+                  <Badge tone={signed ? 'success' : 'warning'}>
+                    {signed
+                      ? t('plugins.staged.signed')
+                      : t('plugins.staged.unsigned')}
+                  </Badge>
+                  <code title={package_.path}>
+                    {package_.path.split(/[\\/]/).pop()}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={!signed || action.pending != null}
+                    loading={
+                      action.pending === `install:${package_.id}:${package_.version}`
+                    }
+                    onClick={() => install(package_)}
+                  >
+                    {t('plugins.staged.install')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={action.pending != null}
+                    loading={
+                      action.pending === `unstage:${package_.id}:${package_.version}`
+                    }
+                    onClick={() => remove(package_)}
+                  >
+                    {t('plugins.staged.delete')}
+                  </Button>
+                </div>
+              )
+            })}
           </div>
         )}
       </Panel>

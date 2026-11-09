@@ -366,6 +366,18 @@ export interface VerificationChain {
   anchor_valid: boolean | null
 }
 
+export interface StagedPackage {
+  id: string
+  version: string
+  path: string
+  metadata?: {
+    sha256?: string
+    publisher?: string
+    signature_verified?: boolean
+    staged_at?: number
+  } | null
+}
+
 export interface RequestedCapability {
   name: string
   scope: unknown
