@@ -31,8 +31,11 @@ jobs:
         run: |
           node --check scripts/browser-resume-test.mjs
           node --check scripts/browser-resume-mock.mjs
+          node --check scripts/browser-admin-mock.mjs
           node --check scripts/mock-server.mjs
       - name: Build
         run: npm run build
       - name: Browser resume smoke
         run: npm run test:browser
+      - name: Browser admin plugin smoke
+        run: npm run test:admin
