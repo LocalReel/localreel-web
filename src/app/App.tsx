@@ -64,6 +64,7 @@ function render(name: string, params: Record<string, string>) {
     case 'admin.scans':
     case 'admin.cache':
     case 'admin.backup':
+    case 'admin.audit':
     case 'admin.settings':
       return <AdminPage section={name} />
     case 'plugins':

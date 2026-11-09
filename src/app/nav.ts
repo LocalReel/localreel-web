@@ -37,5 +37,6 @@ export const adminTabs: AdminTab[] = [
   { to: '/admin/scans', route: 'admin.scans', labelKey: 'admin.tab.scans', icon: 'list' },
   { to: '/admin/cache', route: 'admin.cache', labelKey: 'admin.tab.cache', icon: 'database' },
   { to: '/admin/backup', route: 'admin.backup', labelKey: 'admin.tab.backup', icon: 'layers' },
+  { to: '/admin/audit', route: 'admin.audit', labelKey: 'admin.tab.audit', icon: 'shield' },
   { to: '/admin/settings', route: 'admin.settings', labelKey: 'admin.tab.settings', icon: 'settings' },
 ]

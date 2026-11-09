@@ -683,3 +683,21 @@ export async function revokeSession(id: string): Promise<void> {
     { method: 'POST' },
   )
 }
+
+/** One recorded administrator action. Append-only on the server. */
+export interface AdminAuditEntry {
+  id: number
+  at: number
+  user_id?: number
+  username?: string
+  action: string
+  target?: string
+  detail?: string
+}
+
+export async function fetchAdminAudit(limit = 100): Promise<AdminAuditEntry[]> {
+  const body = await request<{ items: AdminAuditEntry[] }>(
+    `/api/v1/admin/audit?limit=${limit}`,
+  )
+  return body.items
+}

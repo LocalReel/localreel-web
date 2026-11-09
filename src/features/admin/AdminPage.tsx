@@ -6,6 +6,7 @@ import { PageHeader } from '../../ui/PageHeader'
 import { Panel } from '../../ui/Panel'
 import { useAuth } from '../auth/context'
 import { AccountsPage } from './AccountsPage'
+import { AuditPage } from './AuditPage'
 import { BackupPage } from './BackupPage'
 import { CachePage } from './CachePage'
 import { JobsPage } from './JobsPage'
@@ -63,6 +64,8 @@ function sectionView(section: string) {
       return <CachePage />
     case 'admin.backup':
       return <BackupPage />
+    case 'admin.audit':
+      return <AuditPage />
     case 'admin.settings':
       return <SettingsPage />
     default:

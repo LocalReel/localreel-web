@@ -23,6 +23,7 @@ export type RouteName =
   | 'admin.scans'
   | 'admin.cache'
   | 'admin.backup'
+  | 'admin.audit'
   | 'admin.settings'
   | 'plugins'
   | 'plugin'
@@ -47,6 +48,7 @@ export const routes: RouteDefinition[] = [
   { name: 'admin.scans', pattern: '/admin/scans' },
   { name: 'admin.cache', pattern: '/admin/cache' },
   { name: 'admin.backup', pattern: '/admin/backup' },
+  { name: 'admin.audit', pattern: '/admin/audit' },
   { name: 'admin.settings', pattern: '/admin/settings' },
   { name: 'plugins', pattern: '/plugins' },
   { name: 'plugin', pattern: '/plugins/:id' },
