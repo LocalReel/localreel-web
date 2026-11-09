@@ -203,13 +203,18 @@ export function PluginsPage() {
             {rows.map(plugin => (
               <article key={plugin.id} className={styles.card}>
                 <div className={styles.cardHead}>
-                  <h3 className={styles.cardTitle}>{plugin.name}</h3>
+                  <span className={styles.pluginMark} aria-hidden="true">
+                    {monogram(plugin.name || plugin.id)}
+                  </span>
+                  <div className={styles.cardTitles}>
+                    <h3 className={styles.cardTitle}>{plugin.name}</h3>
+                    <span className={styles.cardVer}>
+                      {t('plugins.version', { version: plugin.version })}
+                    </span>
+                  </div>
                   <Badge tone={PLUGIN_STATE_TONE[plugin.state]}>
                     {t(PLUGIN_STATE_KEY[plugin.state])}
                   </Badge>
-                  <span className={styles.cardVer}>
-                    {t('plugins.version', { version: plugin.version })}
-                  </span>
                 </div>
 
                 <div className={styles.cardMeta}>
@@ -459,4 +464,21 @@ export function PluginsPage() {
     </div>
     </>
   )
+}
+
+/**
+ * Two characters that stand in for a package icon.
+ *
+ * Manifests have no icon yet, and a list of identically shaped rows is hard to
+ * scan; a monogram at least makes a plugin recognisable before you read its
+ * name. Latin names take their initials, CJK names their first character.
+ */
+export function monogram(name: string): string {
+  const words = name.trim().split(/[\s_\-.]+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  const initials = words
+    .slice(0, 2)
+    .map(word => Array.from(word)[0] ?? '')
+    .join('')
+  return initials.toUpperCase().slice(0, 2)
 }
