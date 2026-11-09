@@ -523,6 +523,15 @@ export function deleteStagedPackage(id: string, version: string): Promise<void> 
   )
 }
 
+export function uploadPluginPackage(
+  file: File,
+): Promise<{ manifest: { id: string; version: string } }> {
+  return request<{ manifest: { id: string; version: string } }>(
+    '/api/v1/plugins/packages/upload',
+    { method: 'POST', body: file },
+  )
+}
+
 export async function fetchVerifications(limit = 20): Promise<PackageVerification[]> {
   const body = await request<{ entries: PackageVerification[] }>(
     `/api/v1/plugins/verifications?limit=${limit}`,

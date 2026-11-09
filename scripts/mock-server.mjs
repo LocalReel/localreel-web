@@ -195,6 +195,13 @@ export async function startMockServer() {
           return
         }
       }
+      if (url.pathname === '/api/v1/plugins/packages/upload') {
+        sendJson(response, 200, {
+          manifest: { id: 'upload-demo', version: '0.1.0' },
+          signature_verified: false,
+        })
+        return
+      }
       if (url.pathname.startsWith('/api/v1/plugins/packages/')) {
         if (request.method === 'DELETE') {
           const [, , , , , id, version] = url.pathname.split('/')

@@ -434,6 +434,8 @@ export const en = {
   'plugins.staged.delete': 'Delete',
   'plugins.staged.deletePrompt': 'Delete {id} {version} from staging?',
   'plugins.staged.restartRequired': '{id} {version} installed; restart the server to load it.',
+  'plugins.staged.upload': 'Upload .lrplug',
+  'plugins.staged.uploaded': '{id} {version} uploaded to staging.',
   'plugins.packageAudit.title': 'Package activity',
   'plugins.packageAudit.note': 'Recent stage, install and unstage audit events.',
   'plugins.packageAudit.empty': 'No package activity',

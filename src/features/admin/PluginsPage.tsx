@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { routeHref } from '../../app/match'
 import { Link } from '../../app/router'
@@ -12,6 +12,7 @@ import {
   installStagedPackage,
   restartPlugin,
   setPluginEnabled,
+  uploadPluginPackage,
   verifyVerificationChain,
 } from '../../data/client'
 import { useQuery } from '../../data/hooks'
@@ -46,6 +47,7 @@ export function PluginsPage() {
     staleTime: 15_000,
   })
   const [installNotice, setInstallNotice] = useState<string | null>(null)
+  const fileInput = useRef<HTMLInputElement>(null)
   const action = useAction()
 
   const toggle = (plugin: PluginDescriptor) => {
@@ -82,8 +84,35 @@ export function PluginsPage() {
     )
   }
 
+  const upload = (file: File) => {
+    void action
+      .run(
+        'upload',
+        async () => {
+          const result = await uploadPluginPackage(file)
+          setInstallNotice(
+            t('plugins.staged.uploaded', {
+              id: result.manifest.id,
+              version: result.manifest.version,
+            }),
+          )
+        },
+        () => staged.reload(),
+      )
+      .finally(() => {
+        if (fileInput.current) fileInput.current.value = ''
+      })
+  }
+
   const remove = (package_: StagedPackage) => {
-    if (!window.confirm(t('plugins.staged.deletePrompt', { id: package_.id, version: package_.version }))) {
+    if (
+      !window.confirm(
+        t('plugins.staged.deletePrompt', {
+          id: package_.id,
+          version: package_.version,
+        }),
+      )
+    ) {
       return
     }
     void action.run(
@@ -291,14 +320,29 @@ export function PluginsPage() {
         title={t('plugins.staged.title')}
         note={t('plugins.staged.note')}
         tools={
-          <Button
-            variant="ghost"
-            size="sm"
-            icon="refresh"
-            aria-label={t('common.refresh')}
-            loading={staged.refreshing}
-            onClick={() => staged.reload()}
-          />
+          <div className={styles.cardMeta}>
+            <label className={buttonClass('secondary', 'sm')}>
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".lrplug,application/zip"
+                hidden
+                onChange={event => {
+                  const file = event.target.files?.[0]
+                  if (file) upload(file)
+                }}
+              />
+              {t('plugins.staged.upload')}
+            </label>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon="refresh"
+              aria-label={t('common.refresh')}
+              loading={staged.refreshing}
+              onClick={() => staged.reload()}
+            />
+          </div>
         }
       >
         {installNotice ? <p className={styles.muted}>{installNotice}</p> : null}

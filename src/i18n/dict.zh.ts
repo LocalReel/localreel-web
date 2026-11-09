@@ -424,6 +424,8 @@ export const zh: Record<TranslationKey, string> = {
   'plugins.staged.delete': '删除',
   'plugins.staged.deletePrompt': '从暂存区删除 {id} {version}？',
   'plugins.staged.restartRequired': '{id} {version} 已安装；重启服务器后加载。',
+  'plugins.staged.upload': '上传 .lrplug',
+  'plugins.staged.uploaded': '{id} {version} 已上传到暂存区。',
   'plugins.packageAudit.title': '包操作记录',
   'plugins.packageAudit.note': '最近的 stage、install、unstage 审计事件。',
   'plugins.packageAudit.empty': '没有包操作记录',

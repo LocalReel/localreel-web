@@ -118,6 +118,7 @@ try {
     'Signed by host',
     'Staged packages',
     'Install',
+    'Upload .lrplug',
     'Package activity',
     'package.install',
   ]
