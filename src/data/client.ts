@@ -720,8 +720,24 @@ export interface ServerConfig {
   }
   scan_watch: boolean
   update_check: boolean
+  /** The address a phone on the same network would use, when there is one. */
+  lan_address: string | null
+  config_file: string | null
 }
 
 export async function fetchServerConfig(): Promise<ServerConfig> {
   return request<ServerConfig>('/api/v1/admin/config')
+}
+
+/** Write `allow_remote` into the configuration file. Needs a restart. */
+export async function setRemoteAccess(allow: boolean): Promise<{
+  allow_remote: boolean
+  restart_required: boolean
+  config_file: string
+}> {
+  return request('/api/v1/admin/config', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ allow_remote: allow }),
+  })
 }

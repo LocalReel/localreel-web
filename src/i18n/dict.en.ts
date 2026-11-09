@@ -573,6 +573,14 @@ export const en = {
   'settings.server.update': 'Check for updates',
   'settings.server.on': 'On',
   'settings.server.off': 'Off',
+  'settings.server.address': 'Open on another device',
+  'settings.server.remote.on': 'Allow other devices',
+  'settings.server.remote.off': 'Stop allowing other devices',
+  'settings.server.remote.onConfirm': 'Allow other devices?',
+  'settings.server.remote.offConfirm': 'Stop allowing other devices?',
+  'settings.server.remote.confirmBody':
+    'This writes to the configuration file. The change takes effect the next time LocalReel starts, so nothing is interrupted now.',
+  'settings.server.remote.saved': 'Saved. Restart LocalReel for this to take effect.',
   'settings.server.hint':
     'These are read from the configuration file and take effect on restart; changing them here would restart the server under whoever is watching.',
   'settings.danger': 'Danger zone',

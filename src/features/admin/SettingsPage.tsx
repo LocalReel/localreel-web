@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { useSettings } from '../../app/settings'
-import { fetchAdminHealth, fetchServerConfig, shutdown } from '../../data/client'
+import { fetchAdminHealth, fetchServerConfig, setRemoteAccess, shutdown } from '../../data/client'
 import { useQuery } from '../../data/hooks'
 import { useT } from '../../i18n'
 import { Button } from '../../ui/Button'
@@ -23,7 +23,25 @@ export function SettingsPage() {
   const config = useQuery('admin:config', fetchServerConfig, { staleTime: 60_000 })
   const confirm = useConfirm()
   const stop = useAction()
+  const remote = useAction()
   const [stopped, setStopped] = useState(false)
+  const [savedNotice, setSavedNotice] = useState<string | null>(null)
+
+  const toggleRemote = async (current: boolean) => {
+    const ok = await confirm({
+      title: current ? t('settings.server.remote.offConfirm') : t('settings.server.remote.onConfirm'),
+      body: t('settings.server.remote.confirmBody'),
+      confirmLabel: current ? t('settings.server.remote.off') : t('settings.server.remote.on'),
+      cancelLabel: t('common.cancel'),
+      danger: !current,
+    })
+    if (!ok) return
+    await remote.run('remote', async () => {
+      await setRemoteAccess(!current)
+      setSavedNotice(t('settings.server.remote.saved'))
+      await config.reload()
+    })
+  }
 
   const shutdownServer = async () => {
     const ok = await confirm({
@@ -126,6 +144,16 @@ export function SettingsPage() {
                     ? t('settings.server.lan.on')
                     : t('settings.server.lan.off'),
                 },
+                ...(config.data.lan_address
+                  ? [
+                      {
+                        key: 'lanAddress',
+                        label: t('settings.server.address'),
+                        value: `http://${config.data.lan_address}`,
+                        mono: true,
+                      },
+                    ]
+                  : []),
                 {
                   key: 'watch',
                   label: t('settings.server.watch'),
@@ -143,6 +171,20 @@ export function SettingsPage() {
               ]}
             />
             <p className={styles.muted}>{t('settings.server.hint')}</p>
+
+            <div className={styles.formFoot}>
+              <Button
+                variant={config.data.allow_remote ? 'secondary' : 'primary'}
+                icon={config.data.allow_remote ? 'close' : 'globe'}
+                loading={remote.pending === 'remote'}
+                onClick={() => void toggleRemote(config.data!.allow_remote)}
+              >
+                {config.data.allow_remote
+                  ? t('settings.server.remote.off')
+                  : t('settings.server.remote.on')}
+              </Button>
+            </div>
+            {savedNotice ? <p className={styles.ok}>{savedNotice}</p> : null}
           </>
         ) : config.loading ? (
           <LoadingRow>{t('common.loading')}</LoadingRow>
