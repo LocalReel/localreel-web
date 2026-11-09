@@ -701,3 +701,27 @@ export async function fetchAdminAudit(limit = 100): Promise<AdminAuditEntry[]> {
   )
   return body.items
 }
+
+/** The configuration the server is actually running with. Read-only. */
+export interface ServerConfig {
+  host: string
+  port: number
+  mode: string
+  allow_remote: boolean
+  lan: boolean
+  loopback_only: boolean
+  dirs: {
+    data: string
+    database: string
+    logs: string
+    web: string | null
+    thumbnails: string
+    transcodes: string
+  }
+  scan_watch: boolean
+  update_check: boolean
+}
+
+export async function fetchServerConfig(): Promise<ServerConfig> {
+  return request<ServerConfig>('/api/v1/admin/config')
+}

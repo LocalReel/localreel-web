@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { useSettings } from '../../app/settings'
-import { fetchAdminHealth, shutdown } from '../../data/client'
+import { fetchAdminHealth, fetchServerConfig, shutdown } from '../../data/client'
 import { useQuery } from '../../data/hooks'
 import { useT } from '../../i18n'
 import { Button } from '../../ui/Button'
@@ -20,6 +20,7 @@ export function SettingsPage() {
   const t = useT()
   const { settings, update, reset } = useSettings()
   const health = useQuery('admin:health', fetchAdminHealth, { staleTime: 15_000 })
+  const config = useQuery('admin:config', fetchServerConfig, { staleTime: 60_000 })
   const confirm = useConfirm()
   const stop = useAction()
   const [stopped, setStopped] = useState(false)
@@ -98,6 +99,54 @@ export function SettingsPage() {
             {t('settings.reset')}
           </Button>
         </div>
+      </Panel>
+
+      <Panel title={t('settings.server')} note={t('settings.server.body')}>
+        {config.error ? <Notice error={config.error} onDismiss={() => config.reload()} /> : null}
+        {config.data ? (
+          <>
+            <FactList
+              items={[
+                {
+                  key: 'listen',
+                  label: t('settings.server.listen'),
+                  value: `${config.data.host}:${config.data.port}`,
+                  mono: true,
+                },
+                {
+                  key: 'mode',
+                  label: t('overview.mode'),
+                  value: config.data.mode,
+                  mono: true,
+                },
+                {
+                  key: 'lan',
+                  label: t('settings.server.lan'),
+                  value: config.data.lan
+                    ? t('settings.server.lan.on')
+                    : t('settings.server.lan.off'),
+                },
+                {
+                  key: 'watch',
+                  label: t('settings.server.watch'),
+                  value: config.data.scan_watch
+                    ? t('settings.server.on')
+                    : t('settings.server.off'),
+                },
+                {
+                  key: 'update',
+                  label: t('settings.server.update'),
+                  value: config.data.update_check
+                    ? t('settings.server.on')
+                    : t('settings.server.off'),
+                },
+              ]}
+            />
+            <p className={styles.muted}>{t('settings.server.hint')}</p>
+          </>
+        ) : config.loading ? (
+          <LoadingRow>{t('common.loading')}</LoadingRow>
+        ) : null}
       </Panel>
 
       <Panel title={t('settings.about')} note={t('settings.about.body')}>
