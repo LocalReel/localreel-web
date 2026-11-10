@@ -553,6 +553,9 @@ export const zh: Record<TranslationKey, string> = {
   'audit.action.userUpdate': '修改了账户',
   'audit.action.userDelete': '删除了账户',
   'audit.action.allowRemote': '改动了局域网访问',
+  'audit.action.pluginInstall': '安装了插件',
+  'audit.action.pluginUninstall': '删除了插件包',
+  'audit.action.backupRestore': '恢复了一份备份',
   'lanCard.title': '也可以让手机来看',
   'lanCard.body':
     '现在只有这台电脑能打开媒体库。允许其他设备之后，同一个 Wi-Fi 下的手机和平板也能看，各用各的账户。',

@@ -567,6 +567,9 @@ export const en = {
   'audit.action.userUpdate': 'Changed an account',
   'audit.action.userDelete': 'Deleted an account',
   'audit.action.allowRemote': 'Changed remote access',
+  'audit.action.pluginInstall': 'Installed a plugin',
+  'audit.action.pluginUninstall': 'Removed a plugin package',
+  'audit.action.backupRestore': 'Restored a backup',
   'lanCard.title': 'Watch on your phone too',
   'lanCard.body':
     'Right now only this computer can open the library. Allow other devices and the tablets and phones on the same Wi-Fi can watch too — with their own accounts.',

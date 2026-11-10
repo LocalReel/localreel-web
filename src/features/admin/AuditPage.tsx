@@ -74,5 +74,8 @@ function actionLabel(action: string, t: ReturnType<typeof useT>): string {
   if (action === 'user.update') return t('audit.action.userUpdate')
   if (action === 'user.delete') return t('audit.action.userDelete')
   if (action === 'config.allow_remote') return t('audit.action.allowRemote')
+  if (action === 'plugin.install') return t('audit.action.pluginInstall')
+  if (action === 'plugin.uninstall') return t('audit.action.pluginUninstall')
+  if (action === 'backup.restore') return t('audit.action.backupRestore')
   return action
 }
