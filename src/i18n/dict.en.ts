@@ -570,6 +570,7 @@ export const en = {
   'audit.action.pluginInstall': 'Installed a plugin',
   'audit.action.pluginUninstall': 'Removed a plugin package',
   'audit.action.backupRestore': 'Restored a backup',
+  'audit.action.adminApi': 'Changed something (unrecorded route)',
   'lanCard.title': 'Watch on your phone too',
   'lanCard.body':
     'Right now only this computer can open the library. Allow other devices and the tablets and phones on the same Wi-Fi can watch too — with their own accounts.',

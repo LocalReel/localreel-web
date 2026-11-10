@@ -29,8 +29,8 @@ import {
   PLUGIN_STATE_KEY,
   PLUGIN_STATE_TONE,
   useAction,
-} from './shared'
-import styles from './Admin.module.css'
+} from '../admin/shared'
+import styles from '../admin/Admin.module.css'
 
 /**
  * One plugin, four questions: what did it ask for (capabilities), what did we

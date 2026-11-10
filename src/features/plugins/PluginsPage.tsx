@@ -26,8 +26,8 @@ import { Icon } from '../../ui/Icons'
 import { PageHeader } from '../../ui/PageHeader'
 import { Panel } from '../../ui/Panel'
 import { LoadingRow } from '../../ui/Spinner'
-import { Notice, PLUGIN_STATE_KEY, PLUGIN_STATE_TONE, buttonClass, useAction } from './shared'
-import styles from './Admin.module.css'
+import { Notice, PLUGIN_STATE_KEY, PLUGIN_STATE_TONE, buttonClass, useAction } from '../admin/shared'
+import styles from '../admin/Admin.module.css'
 
 /**
  * One card per sidecar process.

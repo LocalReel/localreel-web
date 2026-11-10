@@ -556,6 +556,7 @@ export const zh: Record<TranslationKey, string> = {
   'audit.action.pluginInstall': '安装了插件',
   'audit.action.pluginUninstall': '删除了插件包',
   'audit.action.backupRestore': '恢复了一份备份',
+  'audit.action.adminApi': '改动了一处（该路由未单独记录）',
   'lanCard.title': '也可以让手机来看',
   'lanCard.body':
     '现在只有这台电脑能打开媒体库。允许其他设备之后，同一个 Wi-Fi 下的手机和平板也能看，各用各的账户。',

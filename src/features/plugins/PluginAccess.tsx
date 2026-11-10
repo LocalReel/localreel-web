@@ -27,8 +27,8 @@ import { TextField } from '../../ui/Field'
 import { Icon } from '../../ui/Icons'
 import { Panel } from '../../ui/Panel'
 import { LoadingRow } from '../../ui/Spinner'
-import { Notice, scopeText, useAction } from './shared'
-import styles from './Admin.module.css'
+import { Notice, scopeText, useAction } from '../admin/shared'
+import styles from '../admin/Admin.module.css'
 
 /**
  * Capabilities: what the plugin asks for, what the host would allow, and what

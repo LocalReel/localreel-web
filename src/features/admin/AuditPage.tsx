@@ -77,5 +77,6 @@ function actionLabel(action: string, t: ReturnType<typeof useT>): string {
   if (action === 'plugin.install') return t('audit.action.pluginInstall')
   if (action === 'plugin.uninstall') return t('audit.action.pluginUninstall')
   if (action === 'backup.restore') return t('audit.action.backupRestore')
+  if (action === 'admin.api') return t('audit.action.adminApi')
   return action
 }
