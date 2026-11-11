@@ -10,12 +10,17 @@ The LocalReel web UI: React 18 + TypeScript + Vite, served by the
 - **Show** (`/show/:id`) — the episodes the scanner grouped under one folder,
   with a single "continue" action.
 - **Watch** (`/watch/:id`) — the player, with audio tracks, HLS repackaging,
-  progress-bar previews and resume.
+  progress-bar previews, resume, and the share dialog.
 - **Reels** (`/reels`) — a vertical, snap-scrolling feed ranked by the server.
-- **Console** (`/admin` and eight sub-pages) — health, sources, accounts, jobs,
-  scans, cache, backup, plugins (capabilities, secrets, logs, audit) and
-  appearance settings.
-- **First run / sign-in** — a gate in front of every page.
+- **Plugins** (`/plugins`, `/plugins/:id`) — a top-level module, not a console
+  tab: installed packages with the icon their manifest declares, capabilities
+  per version, secrets, logs and the package audit.
+- **Shared item** (`/s/:token`) — the one page rendered **outside** the sign-in
+  gate, because the people opening a share link do not have an account here. It
+  talks to one endpoint and plays one file.
+- **Console** (`/admin` and nine sub-pages) — health, sources, accounts and
+  sessions, jobs, scans, cache, backup, audit and settings.
+- **First run / sign-in** — a gate in front of every page except `/s/:token`.
 
 Routing is a small history router (`src/app/match.ts` + `router.tsx`); the
 server answers any unmatched HTML path with the shell, so every URL survives a
@@ -113,11 +118,15 @@ LocalReel 的 Web 界面：React 18 + TypeScript + Vite，由 `localreel-core` �
 - **首页**（`/`）：接着看、作品、最近入库。
 - **媒体库**（`/library`）：按文件列出全部条目，可搜索、可筛选。
 - **作品**（`/show/:id`）：同一目录下被归并的剧集，附一个"继续播放"动作。
-- **播放**（`/watch/:id`）：音轨、HLS 重封装、进度条预览、续播。
+- **播放**（`/watch/:id`）：音轨、HLS 重封装、进度条预览、续播，以及分享对话框。
 - **短视频**（`/reels`）：服务端排好序的竖向流。
-- **管理**（`/admin` 及八个子页）：运行状态、来源、账户、任务、扫描、缓存、
-  备份、插件（能力、密钥、日志、审计）与外观设置。
-- **首次设置 / 登录**：所有页面之前的一道门。
+- **插件**（`/plugins`、`/plugins/:id`）：左侧一级模块，不再是控制台的一个标签页；
+  列出已安装的包与清单声明的图标、按版本授权的能力、密钥、日志与包审计。
+- **分享页**（`/s/:token`）：唯一渲染在登录门**之外**的页面——打开分享链接的人
+  在这台服务器上没有账户。它只问一个接口、只播一个文件。
+- **管理**（`/admin` 及九个子页）：运行状态、来源、账户与会话、任务、扫描、缓存、
+  备份、审计与设置。
+- **首次设置 / 登录**：除 `/s/:token` 之外所有页面之前的一道门。
 
 导航使用自带的 history 路由；服务端对任何未匹配的 HTML 路径返回同一个壳，
 因此每个地址都能刷新、能分享。
