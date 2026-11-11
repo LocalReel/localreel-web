@@ -16,6 +16,7 @@ import { useSavedState } from '../player/useSavedState'
 import { useVideoElement } from '../player/useVideoElement'
 import styles from './Reels.module.css'
 
+const EMPTY_ITEMS: FeedItem[] = []
 const PRELOAD_DISTANCE = 1
 const LONG_PRESS_MS = 480
 const DOUBLE_TAP_MS = 300
@@ -36,7 +37,7 @@ export function ReelsPage() {
   const [active, setActive] = useState(0)
   const [muted, setMuted] = useState(true)
   const [ended, setEnded] = useState(false)
-  const items = feed.data?.items ?? []
+  const items = feed.data?.items ?? EMPTY_ITEMS
 
   useEffect(() => {
     const element = scroller.current
@@ -165,7 +166,7 @@ function Poster({ item }: { item: FeedItem }) {
 
 function ReelCard({
   item,
-  index,
+  index: _index,
   active,
   muted,
   onMute,
@@ -290,7 +291,7 @@ function ReelCard({
         <div className={styles.backdrop} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />
       ) : null}
       <video
-        ref={video.videoRef}
+        ref={video.attachVideo}
         className={`${styles.video} ${fit === 'cover' ? styles.cover : styles.contain}`}
         playsInline
         muted={muted}
@@ -299,6 +300,14 @@ function ReelCard({
 
       <div
         className={styles.stage}
+        role="button"
+        tabIndex={active ? 0 : -1}
+        aria-label={t(video.state.playing ? 'player.pause' : 'player.play')}
+        onKeyDown={event => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          video.toggle()
+        }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -311,11 +320,14 @@ function ReelCard({
         onContextMenu={event => event.preventDefault()}
       />
 
-      {!ready ? (
+      {!ready || video.state.failed ? (
         <div className={styles.status} role="status">
-          {playback.status === 'failed' ? (
+          {playback.status === 'failed' || video.state.failed ? (
             <>
               <p className={styles.statusTitle}>{t('player.failed')}</p>
+              <button type="button" className={styles.back} onClick={playback.retry}>
+                {t('player.retry')}
+              </button>
               {playback.error?.message && playback.error.message !== 'busy' ? (
                 <p>{playback.error.message}</p>
               ) : null}
@@ -397,6 +409,22 @@ function ReelCard({
 
       <div
         className={styles.progress}
+        role="slider"
+        tabIndex={active ? 0 : -1}
+        aria-label={t('player.progress')}
+        aria-valuemin={0}
+        aria-valuemax={duration}
+        aria-valuenow={position}
+        aria-valuetext={`${formatDuration(position)} / ${formatDuration(duration)}`}
+        onKeyDown={event => {
+          if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return
+          event.preventDefault()
+          event.stopPropagation()
+          if (event.key === 'ArrowRight') video.seek(position + 5)
+          if (event.key === 'ArrowLeft') video.seek(position - 5)
+          if (event.key === 'Home') video.seek(0)
+          if (event.key === 'End') video.seek(duration)
+        }}
         onPointerDown={event => {
           event.stopPropagation()
           event.currentTarget.setPointerCapture(event.pointerId)

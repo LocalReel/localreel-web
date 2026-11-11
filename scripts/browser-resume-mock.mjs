@@ -25,7 +25,19 @@ if (!chromePath) {
   throw new Error('CHROME_PATH is required (or install Chrome/Chromium)')
 }
 
-const mock = await startMockServer()
+const hls = process.argv.includes('--hls')
+const watch = process.argv.includes('--watch') || hls
+const hlsRoot = hls ? await mkdtemp(join(tmpdir(), 'localreel-hls-fixture-')) : null
+if (hlsRoot) {
+  const generated = spawnSync(process.env.FFMPEG_PATH ?? 'ffmpeg', [
+    '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=blue:s=160x90:r=10',
+    '-t', '180', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-g', '20',
+    '-hls_time', '2', '-hls_list_size', '0', '-hls_segment_filename', join(hlsRoot, 'segment%d.ts'),
+    join(hlsRoot, 'index.m3u8'),
+  ], { stdio: 'inherit' })
+  if (generated.status !== 0) throw new Error('ffmpeg HLS fixture generation failed')
+}
+const mock = await startMockServer({ playbackDelay: watch ? 300 : 0, hlsRoot })
 const base = `http://127.0.0.1:${mock.port}`
 const expected = 165
 const debugPort = 9300 + (process.pid % 100)
@@ -79,7 +91,7 @@ try {
   try {
     await waitForJson(`http://127.0.0.1:${debugPort}/json/version`)
   } catch (error) {
-    throw new Error(`${error.message}\nchrome exited=${chrome.exitCode} stderr:\n${chromeStderr}`)
+    throw new Error(`${error.message}\nchrome exited=${chrome.exitCode} stderr:\n${chromeStderr}`, { cause: error })
   }
   const targets = await waitForJson(`http://127.0.0.1:${debugPort}/json/list`)
   const target = targets.find(item => item.type === 'page')
@@ -114,7 +126,16 @@ try {
 
   await send('Page.enable')
   await send('Runtime.enable')
-  await send('Page.navigate', { url: `${base}/reels` })
+  if (hls) {
+    // Exercise the hls.js/MSE branch even on Chromium builds with native HLS.
+    await send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `const original = HTMLMediaElement.prototype.canPlayType;
+        HTMLMediaElement.prototype.canPlayType = function(type) {
+          return /mpegurl/i.test(type) ? '' : original.call(this, type);
+        };`,
+    })
+  }
+  await send('Page.navigate', { url: `${base}/${watch ? 'watch/1' : 'reels'}` })
 
   const deadline = Date.now() + 20000
   let actual = null
@@ -144,6 +165,64 @@ try {
     throw new Error(
       `resume failed: expected currentTime≈${expected}, got ${actual.t} (duration ${actual.d})`,
     )
+  }
+  if (hls && !mock.requests.some(entry => /segment\d+\.ts$/.test(entry.path))) {
+    throw new Error('HLS player never requested a segment')
+  }
+  if (watch && !hls) {
+    const evaluate = async expression => {
+      const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
+      if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails))
+      return result.result?.value
+    }
+    await evaluate(`(() => {
+      const video = document.querySelector('video');
+      video.pause(); video.currentTime = 220;
+      video.dispatchEvent(new Event('timeupdate'));
+      video.dispatchEvent(new Event('pause'));
+    })()`)
+    await sleep(200)
+    const slider = await evaluate(`document.querySelector('[role="slider"]').getAttribute('aria-valuenow')`)
+    if (Number(slider) !== 220) throw new Error(`timeupdate listener missing: ${slider}`)
+    if (!mock.requests.some(entry => entry.method === 'PUT' && entry.path === '/api/v1/media/1/state')) {
+      throw new Error('progress flush was not sent')
+    }
+    const keyboardAllowed = await evaluate(`(() => {
+      const button = document.querySelector('button[aria-pressed]');
+      button.focus();
+      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+      button.dispatchEvent(event);
+      return !event.defaultPrevented;
+    })()`)
+    if (!keyboardAllowed) throw new Error('player shortcuts intercepted button Space')
+    await evaluate(`document.querySelector('header button').click()`)
+    await sleep(150)
+    await evaluate(`(() => {
+      document.querySelector('[role="dialog"] select').focus();
+      document.querySelector('video').dispatchEvent(new Event('timeupdate'));
+    })()`)
+    await sleep(100)
+    if (!await evaluate(`document.activeElement?.tagName === 'SELECT'`)) {
+      throw new Error('dialog stole focus on a player rerender')
+    }
+    await evaluate(`document.querySelector('[role="dialog"] button').click()`)
+    await evaluate(`(() => {
+      history.pushState(null, '', '/watch/2');
+      window.dispatchEvent(new Event('localreel:navigate'));
+    })()`)
+    const nextDeadline = Date.now() + 15000
+    let nextTime = 0
+    while (Date.now() < nextDeadline) {
+      nextTime = await evaluate(`document.querySelector('video')?.currentTime ?? 0`)
+      if (Math.abs(nextTime - 40) < 3) break
+      await sleep(150)
+    }
+    if (Math.abs(nextTime - 40) >= 3) throw new Error(`next item inherited old resume: ${nextTime}`)
+    await evaluate(`document.querySelector('video').dispatchEvent(new Event('error'))`)
+    await sleep(100)
+    if (!await evaluate(`!!document.querySelector('[role="status"] button')`)) {
+      throw new Error('runtime media error has no retry UI')
+    }
   }
   console.log(
     JSON.stringify({
@@ -175,4 +254,5 @@ try {
   }
   await mock.close()
   await rm(profile, { recursive: true, force: true }).catch(() => {})
+  if (hlsRoot) await rm(hlsRoot, { recursive: true, force: true }).catch(() => {})
 }

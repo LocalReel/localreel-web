@@ -536,6 +536,8 @@ export const en = {
   'share.dialog.create': 'Create link',
   'share.dialog.failed': 'The link could not be created.',
   'share.dialog.created': 'Link ready',
+  'player.progress': 'Playback position',
+  'share.dialog.copyFailed': 'Automatic copy is unavailable. Select and copy the link below.',
   'share.dialog.copy': 'Copy',
   'share.dialog.copied': 'Copied',
   'share.dialog.expires': 'Expires {date}',

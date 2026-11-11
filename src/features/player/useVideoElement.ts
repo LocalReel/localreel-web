@@ -48,6 +48,11 @@ export function useVideoElement(options: UseVideoOptions) {
   } = options
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [element, setElement] = useState<HTMLVideoElement | null>(null)
+  const attachVideo = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node
+    setElement(node)
+  }, [])
   const [state, setState] = useState<VideoState>({
     currentTime: 0,
     duration: 0,
@@ -78,7 +83,6 @@ export function useVideoElement(options: UseVideoOptions) {
   // Attach the source. hls.js is loaded on demand so its 600 KB only arrives
   // for files that actually need repackaging.
   useEffect(() => {
-    const element = videoRef.current
     if (!element || !url) return
     resumeApplied.current = false
     setState(current => ({ ...current, failed: false, ended: false }))
@@ -110,6 +114,9 @@ export function useVideoElement(options: UseVideoOptions) {
           return
         }
         instance = new Hls({ enableWorker: true })
+        instance.on(Hls.Events.ERROR, (_event, data) => {
+          if (!disposed && data.fatal) setState(current => ({ ...current, failed: true }))
+        })
         instance.loadSource(url)
         instance.attachMedia(element)
       })
@@ -123,7 +130,7 @@ export function useVideoElement(options: UseVideoOptions) {
       element.removeAttribute('src')
       element.load()
     }
-  }, [isHls, url])
+  }, [element, isHls, url])
 
   // Resume exactly once per source, as soon as metadata allows a seek.
   const applyResume = useCallback(() => {
@@ -137,7 +144,6 @@ export function useVideoElement(options: UseVideoOptions) {
   }, [])
 
   useEffect(() => {
-    const element = videoRef.current
     if (!element) return
 
     const flush = () => {
@@ -199,7 +205,7 @@ export function useVideoElement(options: UseVideoOptions) {
       window.removeEventListener('pagehide', flush)
       flush()
     }
-  }, [applyResume, saveEveryMs])
+  }, [applyResume, element, saveEveryMs])
 
   // A saved position can arrive after metadata; apply it when it does.
   useEffect(() => {
@@ -209,7 +215,7 @@ export function useVideoElement(options: UseVideoOptions) {
   useEffect(() => {
     const element = videoRef.current
     if (element) element.muted = muted
-  }, [muted])
+  }, [element, muted])
 
   const play = useCallback(() => {
     void videoRef.current?.play().catch(() => {
@@ -253,6 +259,7 @@ export function useVideoElement(options: UseVideoOptions) {
   }, [])
 
   return {
+    attachVideo,
     videoRef,
     state,
     play,

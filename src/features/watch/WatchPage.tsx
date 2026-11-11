@@ -76,7 +76,7 @@ export function WatchPage({ id }: { id: string }) {
   })
 
   const ready = playback.status === 'ready' && Boolean(playback.playback?.url)
-  const failed = playback.status === 'failed'
+  const failed = playback.status === 'failed' || video.state.failed
   const preparing = playback.status === 'preparing'
 
   const showControls = () => {
@@ -88,11 +88,17 @@ export function WatchPage({ id }: { id: string }) {
     }, 3200)
   }
 
+  useEffect(() => () => {
+    if (hideTimer.current) window.clearTimeout(hideTimer.current)
+  }, [])
+
   // Keyboard: the surface is a player, so the usual shortcuts apply.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null
-      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return
+      if (document.querySelector('[aria-modal="true"]')) return
+      if (target?.closest('input, textarea, select, button, a, [contenteditable="true"], [role="slider"], [role="menu"]')) return
       if (event.key === ' ' || event.key === 'k') {
         event.preventDefault()
         video.toggle()
@@ -182,7 +188,7 @@ export function WatchPage({ id }: { id: string }) {
       >
         {ready ? (
           <video
-            ref={video.videoRef}
+            ref={video.attachVideo}
             className={styles.video}
             poster={detail.data ? (thumbnailUrl(detail.data) ?? undefined) : undefined}
             playsInline
@@ -195,7 +201,7 @@ export function WatchPage({ id }: { id: string }) {
           />
         ) : null}
 
-        {!ready ? (
+        {!ready || failed ? (
           <div className={styles.status} role="status">
             {failed ? (
               <>
@@ -238,7 +244,7 @@ export function WatchPage({ id }: { id: string }) {
               data-scrubbing={scrubbing}
               role="slider"
               tabIndex={0}
-              aria-label={t('player.play')}
+              aria-label={t('player.progress')}
               aria-valuemin={0}
               aria-valuemax={Math.round(duration)}
               aria-valuenow={Math.round(position)}
@@ -259,8 +265,13 @@ export function WatchPage({ id }: { id: string }) {
               onPointerUp={() => setScrubbing(false)}
               onPointerLeave={() => setHoverRatio(null)}
               onKeyDown={event => {
+                if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return
+                event.preventDefault()
+                event.stopPropagation()
                 if (event.key === 'ArrowRight') video.seek(position + 5)
                 if (event.key === 'ArrowLeft') video.seek(position - 5)
+                if (event.key === 'Home') video.seek(0)
+                if (event.key === 'End') video.seek(duration)
               }}
             >
               <div className={styles.barTrack}>

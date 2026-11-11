@@ -39,7 +39,7 @@ export default function App() {
     navigate(route.path.replace('/admin/plugins', '/plugins'), { replace: true })
   }, [route.name, route.path])
 
-  if (route.name === 'watch') return <WatchPage id={route.params.id} />
+  if (route.name === 'watch') return <WatchPage key={route.params.id} id={route.params.id} />
   if (route.name === 'reels') return <ReelsPage />
 
   return (

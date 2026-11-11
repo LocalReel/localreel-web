@@ -39,7 +39,7 @@ const STORAGE_KEY = 'localreel.ui'
 const LANG_KEY = 'localreel.lang'
 
 function detectInitialLang(): Lang {
-  let saved: string | null = null
+  let saved: string | null
   try {
     saved = localStorage.getItem(LANG_KEY)
   } catch {

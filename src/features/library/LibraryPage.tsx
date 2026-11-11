@@ -70,6 +70,7 @@ export function LibraryPage() {
   // A new query/filter starts a new list; appended pages belong to the old one.
   useEffect(() => {
     generation.current += 1
+    setLoadingMore(false)
     setExtra([])
     setMoreError(null)
   }, [key])

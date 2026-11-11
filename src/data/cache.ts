@@ -91,13 +91,17 @@ export class QueryCache {
 
     const promise = fetcher()
       .then(data => {
-        this.inflight.delete(key)
-        this.write(key, { status: 'success', data, updatedAt: Date.now() })
+        if (this.inflight.get(key) === promise) {
+          this.inflight.delete(key)
+          this.write(key, { status: 'success', data, updatedAt: Date.now() })
+        }
         return data
       })
       .catch(error => {
-        this.inflight.delete(key)
-        this.write(key, { status: 'error', error, updatedAt: Date.now() })
+        if (this.inflight.get(key) === promise) {
+          this.inflight.delete(key)
+          this.write(key, { status: 'error', error, updatedAt: Date.now() })
+        }
         throw error
       })
 

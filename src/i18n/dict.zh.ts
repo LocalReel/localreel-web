@@ -523,6 +523,8 @@ export const zh: Record<TranslationKey, string> = {
   'share.dialog.create': '创建链接',
   'share.dialog.failed': '创建链接失败。',
   'share.dialog.created': '链接已创建',
+  'player.progress': '播放进度',
+  'share.dialog.copyFailed': '无法自动复制，请选中下方链接并手动复制。',
   'share.dialog.copy': '复制',
   'share.dialog.copied': '已复制',
   'share.dialog.expires': '{date} 到期',

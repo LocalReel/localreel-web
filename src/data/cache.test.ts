@@ -5,6 +5,54 @@ import { QueryCache } from './cache.ts'
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (error: Error) => void
+  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  return { promise, resolve, reject }
+}
+
+for (const operation of ['force', 'invalidate', 'clear'] as const) {
+  test(`${operation} prevents an old response from replacing new data`, async () => {
+    const cache = new QueryCache()
+    const old = deferred<string>()
+    const pending = cache.load('k', () => old.promise)
+    if (operation === 'invalidate') cache.invalidate('k')
+    if (operation === 'clear') cache.clear()
+    await cache.load('k', async () => 'new', { force: true })
+    old.resolve('old')
+    await pending
+    assert.equal(cache.get('k').data, 'new')
+  })
+}
+
+test('a superseded failure cannot erase current data', async () => {
+  const cache = new QueryCache()
+  const old = deferred<string>()
+  const pending = cache.load('k', () => old.promise)
+  const rejected = assert.rejects(pending)
+  await cache.load('k', async () => 'new', { force: true })
+  old.reject(new Error('stale error'))
+  await rejected
+  assert.equal(cache.get('k').data, 'new')
+})
+
+test('an old completion cannot clear the newer in-flight request', async () => {
+  const cache = new QueryCache()
+  const old = deferred<string>()
+  const fresh = deferred<string>()
+  const first = cache.load('k', () => old.promise)
+  const second = cache.load('k', () => fresh.promise, { force: true })
+  old.resolve('old')
+  await first
+  let duplicate = false
+  const joined = cache.load('k', async () => { duplicate = true; return 'duplicate' })
+  fresh.resolve('new')
+  assert.equal(await joined, 'new')
+  await second
+  assert.equal(duplicate, false)
+})
+
 test('a fresh value is returned without calling the fetcher again', async () => {
   const cache = new QueryCache()
   let calls = 0

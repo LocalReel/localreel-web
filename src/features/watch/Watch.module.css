@@ -85,6 +85,10 @@
 }
 
 .status {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.8);
   display: grid;
   gap: var(--space-3);
   place-items: center;

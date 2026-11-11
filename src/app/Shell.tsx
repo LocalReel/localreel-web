@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { adminTabs, primaryNav, type NavItem } from './nav'
-import { navigate, Link, useRoute } from './router'
+import { navigate, Link } from './router'
 import { isActive, sectionOf, type RouteMatch } from './match'
 import { useSettings } from './settings'
 import { useAuth } from '../features/auth/context'

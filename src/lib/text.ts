@@ -47,7 +47,7 @@ export function episodeOf(media: Pick<Media, 'episode' | 'filename'>): number | 
  */
 export function mediaHeading(
   media: Pick<Media, 'title' | 'filename' | 'series_title'>,
-  t: Translate,
+  _t: Translate,
 ): string {
   const stored = media.title ? cleanTitle(media.title) : ''
   if (stored) return stored

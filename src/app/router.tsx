@@ -101,13 +101,14 @@ export function useQueryParam(name: string): [string | null, (value: string | nu
   const value = useMemo(() => new URLSearchParams(searchOf(url)).get(name), [url, name])
   const set = useCallback(
     (next: string | null) => {
-      const params = new URLSearchParams(searchOf(url))
+      const latestUrl = currentUrl()
+      const params = new URLSearchParams(searchOf(latestUrl))
       if (next == null || next === '') params.delete(name)
       else params.set(name, next)
       const query = params.toString()
-      navigate(`${pathOf(url)}${query ? `?${query}` : ''}`, { keepScroll: true, replace: true })
+      navigate(`${pathOf(latestUrl)}${query ? `?${query}` : ''}`, { keepScroll: true, replace: true })
     },
-    [name, url],
+    [name],
   )
   return [value, set]
 }

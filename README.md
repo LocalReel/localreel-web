@@ -3,6 +3,11 @@
 The LocalReel web UI: React 18 + TypeScript + Vite, served by the
 `localreel-core` server under `/api/v1`.
 
+Component version: **0.5.8** (release preparation). This update repairs player
+lifecycle and cross-item resume, fences stale cache responses, and improves
+keyboard/focus and playback-error handling. Release checks include lint,
+application/test type checking, and isolated Watch/HLS browser regressions.
+
 ## What it is
 
 - **Home** (`/`) — continue watching, shows, recently added.
@@ -79,10 +84,18 @@ Vite proxies `/api`, `/thumbnails`, `/transcodes`, `/previews`, `/posters` and
 
 ## Build and test
 
+Use Node.js 22.13+ on the 22.x line, or Node.js 24+. See
+[isolated test setup and dependency-audit notes](scripts/TESTING.md).
+
 ```powershell
+npm run lint
+npm run typecheck
+npm run typecheck:test
 npm run build          # tsc (strict) + vite build -> dist/
 npm test               # router, cache, i18n, feed, format, preview, resume, text
 npm run test:browser   # headless Chrome resume smoke against a mock API
+npm run test:watch     # conditional mount, progress, media switch, focus and errors
+npm run test:hls       # isolated hls.js/MSE fixture; requires ffmpeg
 ```
 
 `dist/` is the build-time input the server embeds into its binary, so it must
@@ -114,6 +127,10 @@ Bundled typefaces are licensed under the SIL Open Font License; see
 
 LocalReel 的 Web 界面：React 18 + TypeScript + Vite，由 `localreel-core` 服务器
 在 `/api/v1` 上提供。
+
+组件版本：**0.5.8**（发布准备中）。本次修复播放器生命周期与跨集续播、缓存旧请求
+覆盖、键盘与焦点交互及播放错误反馈；发布门禁包含 lint、应用与测试类型检查，以及
+隔离的 Watch/HLS 浏览器回归。
 
 - **首页**（`/`）：接着看、作品、最近入库。
 - **媒体库**（`/library`）：按文件列出全部条目，可搜索、可筛选。
@@ -154,6 +171,10 @@ LocalReel 的 Web 界面：React 18 + TypeScript + Vite，由 `localreel-core` �
 英文字典推导，缺键直接编译失败；`i18n.test.ts` 另外校验键集、占位符集合与空值。
 
 ## 开发与构建
+
+使用 Node.js 22.13+（22.x）或 24+；执行 `npm run lint`、`npm run typecheck`、
+`npm run typecheck:test` 检查代码与测试。浏览器回归和依赖审计注意事项见
+[测试说明](scripts/TESTING.md)。
 
 先在 `localreel-core` 运行 `.\scripts\dev.ps1`（端口 3101），再在本仓库执行
 `npm install` 与 `npm run dev`。构建与测试：`npm run build`、`npm test`、

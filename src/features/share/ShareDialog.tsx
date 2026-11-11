@@ -12,7 +12,7 @@ import { Dialog } from '../../ui/Dialog'
 import { Icon } from '../../ui/Icons'
 import styles from './ShareDialog.module.css'
 
-const TTL_CHOICES = ['24', '168', 'never'] as const
+type ShareTtl = '24' | '168' | 'never'
 
 /**
  * Creating and revoking links for one item.
@@ -31,13 +31,14 @@ export function ShareDialog({
   onClose: () => void
 }) {
   const t = useT()
-  const [ttl, setTtl] = useState<(typeof TTL_CHOICES)[number]>('24')
+  const [ttl, setTtl] = useState<ShareTtl>('24')
   const [allowDownload, setAllowDownload] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [created, setCreated] = useState<MediaShare | null>(null)
   const [shares, setShares] = useState<MediaShare[]>([])
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
 
   const reload = useCallback(async () => {
     try {
@@ -51,6 +52,7 @@ export function ShareDialog({
     if (!open) return
     setCreated(null)
     setCopied(false)
+    setCopyFailed(false)
     setError(null)
     void reload()
   }, [open, reload])
@@ -64,6 +66,8 @@ export function ShareDialog({
         allow_download: allowDownload,
       })
       setCreated(share)
+      setCopied(false)
+      setCopyFailed(false)
       await reload()
     } catch (problem) {
       setError(problem)
@@ -74,11 +78,14 @@ export function ShareDialog({
 
   const copy = async () => {
     if (!created) return
+    setCopyFailed(false)
     try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
       await navigator.clipboard.writeText(`${window.location.origin}${created.url}`)
       setCopied(true)
     } catch {
       setCopied(false)
+      setCopyFailed(true)
     }
   }
 
@@ -119,7 +126,7 @@ export function ShareDialog({
             id="share-ttl"
             className={styles.select}
             value={ttl}
-            onChange={event => setTtl(event.target.value as (typeof TTL_CHOICES)[number])}
+            onChange={event => setTtl(event.target.value as ShareTtl)}
           >
             <option value="24">{t('share.dialog.ttl.day')}</option>
             <option value="168">{t('share.dialog.ttl.week')}</option>
@@ -148,11 +155,13 @@ export function ShareDialog({
           <div className={styles.created}>
             <p className={styles.createdLabel}>{t('share.dialog.created')}</p>
             <div className={styles.copyRow}>
-              <code className={styles.url}>{`${window.location.origin}${created.url}`}</code>
+              <input className={styles.url} readOnly aria-label={t('share.dialog.created')}
+                value={`${window.location.origin}${created.url}`} onFocus={event => event.currentTarget.select()} />
               <Button variant="secondary" icon="copy" onClick={() => void copy()}>
                 {copied ? t('share.dialog.copied') : t('share.dialog.copy')}
               </Button>
             </div>
+            {copyFailed ? <p role="status" className={styles.hint}>{t('share.dialog.copyFailed')}</p> : null}
             {created.expires_at ? (
               <p className={styles.hint}>
                 {t('share.dialog.expires', { date: when(created.expires_at) })}

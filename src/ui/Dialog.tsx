@@ -43,9 +43,11 @@ export function Dialog({
   const titleId = useId()
   const descriptionId = useId()
 
+  const closeRef = useRef({ dismissible, onClose })
+  closeRef.current = { dismissible, onClose }
   const close = useCallback(() => {
-    if (dismissible) onClose()
-  }, [dismissible, onClose])
+    if (closeRef.current.dismissible) closeRef.current.onClose()
+  }, [])
 
   useEffect(() => {
     if (!open) return

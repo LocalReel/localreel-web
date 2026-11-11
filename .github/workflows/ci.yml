@@ -25,6 +25,10 @@ jobs:
         run: |
           node -e "const fs=require('fs');const b=fs.readFileSync('package.json');if(b[0]===0xEF&&b[1]===0xBB&&b[2]===0xBF){console.error('package.json has a UTF-8 BOM');process.exit(1)}"
       - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck application and tests
+        run: npm run typecheck && npm run typecheck:test
       - name: Resume unit tests
         run: npm test
       - name: Syntax check browser tests
@@ -35,6 +39,12 @@ jobs:
           node --check scripts/mock-server.mjs
       - name: Build
         run: npm run build
+      - name: Install isolated HLS fixture generator
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Browser watch lifecycle regression
+        run: npm run test:watch
+      - name: Browser HLS fixture regression
+        run: npm run test:hls
       - name: Browser resume smoke
         run: npm run test:browser
       - name: Browser admin plugin smoke

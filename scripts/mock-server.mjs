@@ -102,7 +102,7 @@ async function serveFile(request, response, path, contentType) {
   createReadStream(path).pipe(response)
 }
 
-export async function startMockServer() {
+export async function startMockServer({ playbackDelay = 0, hlsRoot = null } = {}) {
   const requests = []
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1')
@@ -277,8 +277,23 @@ export async function startMockServer() {
         sendJson(response, 200, state)
         return
       }
-      if (url.pathname === '/api/v1/media/1/playback') {
-        sendJson(response, 200, { mode: 'direct', url: '/sample.webm' })
+      if (/^\/api\/v1\/media\/[12]$/.test(url.pathname)) {
+        sendJson(response, 200, { ...media, id: Number(url.pathname.split('/').at(-1)) })
+        return
+      }
+      if (url.pathname === '/api/v1/media/2/state') {
+        sendJson(response, 200, { ...state, media_id: 2, position: 40 })
+        return
+      }
+      if (url.pathname === '/api/v1/media/2/tracks') {
+        sendJson(response, 200, [])
+        return
+      }
+      if (/^\/api\/v1\/media\/[12]\/playback$/.test(url.pathname)) {
+        if (playbackDelay) await new Promise(resolve => setTimeout(resolve, playbackDelay))
+        sendJson(response, 200, hlsRoot
+          ? { mode: 'hls', url: '/fixture-hls/index.m3u8' }
+          : { mode: 'direct', url: '/sample.webm' })
         return
       }
       if (url.pathname === '/api/v1/health') {
@@ -287,6 +302,11 @@ export async function startMockServer() {
       }
       if (url.pathname === '/api/v1/media/1/tracks') {
         sendJson(response, 200, [])
+        return
+      }
+      if (hlsRoot && /^\/fixture-hls\/(index\.m3u8|segment\d+\.ts)$/.test(url.pathname)) {
+        await serveFile(request, response, join(hlsRoot, url.pathname.split('/').at(-1)),
+          url.pathname.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t')
         return
       }
       if (url.pathname === '/sample.webm') {

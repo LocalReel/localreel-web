@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { ApiError, describeError, fetchTracks, preparePlayback } from '../../data/client'
 import type { Playback, Track } from '../../data/types'
