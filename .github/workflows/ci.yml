@@ -14,7 +14,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The browser regressions need an ffmpeg install; a slow apt mirror once ate
+    # the whole 20-minute budget on its own, so the job keeps room for it.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,7 +42,15 @@ jobs:
       - name: Build
         run: npm run build
       - name: Install isolated HLS fixture generator
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          # A runner image can hold the dpkg lock for unattended upgrades; waiting
+          # for it beats failing, and --no-install-recommends keeps the download
+          # small enough for the job budget.
+          sudo apt-get update -o DPkg::Lock::Timeout=300
+          sudo apt-get install -y --no-install-recommends -o DPkg::Lock::Timeout=300 ffmpeg
+          ffmpeg -version | head -1
       - name: Browser watch lifecycle regression
         run: npm run test:watch
       - name: Browser HLS fixture regression
