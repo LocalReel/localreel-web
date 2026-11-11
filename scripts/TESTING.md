@@ -9,7 +9,7 @@ Run `npm ci`, then `npm run build` before browser tests. Requires Node.js 22.13+
 - `npm run test:watch`: delayed playback preparation, conditional video mounting, saved-position resume, timeupdate UI, state flush, button keyboard handling, dialog focus stability, SPA media switch with a different resume position, and media-error retry UI.
 - `npm run test:browser`: Reels saved-position playback smoke.
 - `npm run test:admin`: mocked administrator/plugin page smoke.
-- `npm run test:hls`: isolated hls.js/MSE playback and segment requests. Requires `ffmpeg` with libx264 on PATH (or `FFMPEG_PATH`). Generates a short HLS fixture in a unique temporary directory. Native HLS detection is disabled in this test so the dynamically loaded hls.js path is exercised.
+- `npm run test:hls`: isolated hls.js/MSE playback and segment requests. Uses the statically linked `ffmpeg-static` dev dependency (override with `FFMPEG_PATH`), so no system packages are needed. Generates a short HLS fixture in a unique temporary directory. Native HLS detection is disabled in this test so the dynamically loaded hls.js path is exercised.
 
 The mock scripts serve the built `dist` on an ephemeral loopback port, use only synthetic API state and fixtures, and create a separate temporary browser profile. They do not connect to a real LocalReel server or modify a media library. Generated HLS fixtures and browser profiles are removed at shutdown. CI runs build plus all four browser gates, installing ffmpeg for HLS.
 

@@ -1,13 +1,27 @@
 // Node 22 CDP smoke against the built UI + mock API/fixture.
-// No LocalReel core build or ffmpeg is required.
+// No LocalReel core build is required; only the HLS fixture needs ffmpeg, and
+// that binary comes from the `ffmpeg-static` dev dependency unless FFMPEG_PATH
+// points somewhere else.
 
 import { spawn, spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { startMockServer } from './mock-server.mjs'
+
+/** A static ffmpeg keeps CI off the system package manager. */
+function bundledFfmpeg() {
+  try {
+    const require = createRequire(import.meta.url)
+    const path = require('ffmpeg-static')
+    return typeof path === 'string' && existsSync(path) ? path : null
+  } catch {
+    return null
+  }
+}
 
 const chromeCandidates = [
   process.env.CHROME_PATH,
@@ -29,13 +43,14 @@ const hls = process.argv.includes('--hls')
 const watch = process.argv.includes('--watch') || hls
 const hlsRoot = hls ? await mkdtemp(join(tmpdir(), 'localreel-hls-fixture-')) : null
 if (hlsRoot) {
-  const generated = spawnSync(process.env.FFMPEG_PATH ?? 'ffmpeg', [
+  const ffmpeg = process.env.FFMPEG_PATH ?? bundledFfmpeg() ?? 'ffmpeg'
+  const generated = spawnSync(ffmpeg, [
     '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=blue:s=160x90:r=10',
     '-t', '180', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-g', '20',
     '-hls_time', '2', '-hls_list_size', '0', '-hls_segment_filename', join(hlsRoot, 'segment%d.ts'),
     join(hlsRoot, 'index.m3u8'),
   ], { stdio: 'inherit' })
-  if (generated.status !== 0) throw new Error('ffmpeg HLS fixture generation failed')
+  if (generated.status !== 0) throw new Error(`ffmpeg HLS fixture generation failed (${ffmpeg})`)
 }
 const mock = await startMockServer({ playbackDelay: watch ? 300 : 0, hlsRoot })
 const base = `http://127.0.0.1:${mock.port}`
